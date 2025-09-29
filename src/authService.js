@@ -7,7 +7,10 @@ import { auth } from './firebase';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
-  signOut 
+  signOut,
+  // New imports for Google Sign-In
+  GoogleAuthProvider,     
+  signInWithPopup         
 } from 'firebase/auth';
 
 /**
@@ -40,6 +43,30 @@ export async function signIn(email, password) {
     return userCredential;
   } catch (error) {
     console.error('Sign in error:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Signs in a user using a Google pop-up window.
+ * @returns {Promise<UserCredential>}
+ */
+export async function signInWithGoogle() {
+  try {
+    // 1. Create a Google Auth Provider instance
+    const provider = new GoogleAuthProvider();
+    
+    // 2. Open the sign-in pop-up
+    const result = await signInWithPopup(auth, provider);
+    
+    // The signed-in user info.
+    const user = result.user; 
+    
+    console.log('Google Sign In successful:', user);
+    return result;
+  } catch (error) {
+    // Handle specific errors like the pop-up being closed or permission denied
+    console.error('Google Sign In error:', error.message);
     throw error;
   }
 }

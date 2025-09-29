@@ -7,8 +7,8 @@
 // Import the necessary Auth instance from your initialized firebase file
 import { auth } from './firebase.js'; 
 
-// Import the specific authentication functions
-import { signUp, signIn, signOutUser } from './authService.js';
+// Import the specific authentication functions, including the new one
+import { signUp, signIn, signOutUser, signInWithGoogle } from './authService.js';
 
 // Import the state listener
 import { onAuthStateChanged } from 'firebase/auth';
@@ -26,6 +26,9 @@ const signupEmailInput = document.getElementById('signup-email');
 const signupPasswordInput = document.getElementById('signup-password');
 const signinEmailInput = document.getElementById('signin-email');
 const signinPasswordInput = document.getElementById('signin-password');
+
+// ADDED REFERENCE FOR GOOGLE BUTTON
+const googleSignInButton = document.getElementById('google-signin-button');
 
 
 // --------------------------------------------------
@@ -63,6 +66,17 @@ document.getElementById('signout-button')?.addEventListener('click', async () =>
     authStatus.textContent = 'Signing out...';
     await signOutUser();
     // Success handled by onAuthStateChanged
+});
+
+// --- GOOGLE SIGN IN ---
+googleSignInButton?.addEventListener('click', async () => {
+    authStatus.textContent = 'Signing in with Google...';
+    try {
+        await signInWithGoogle();
+        // Success handled by onAuthStateChanged
+    } catch (error) {
+        authStatus.textContent = `Google Sign In Failed: ${error.message}`;
+    }
 });
 
 

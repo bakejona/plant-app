@@ -1,141 +1,177 @@
 // src/main.js
+
 import './style.scss';
 import { auth } from './firebase.js'; 
 import { onAuthStateChanged } from 'firebase/auth';
 import { signUp, signIn, signInWithGoogle } from './authService.js';
 import { createOrUpdateUserProfile, getUserProfile } from './userService.js'; 
 import { navigate } from './router.js'; 
-// NOTE: This file assumes router.js and accountPage.js exist and are configured.
 
 
 // --------------------------------------------------
-// 1. DOM ELEMENT REFERENCES (CORRECTED)
+// 1. DOM ELEMENT REFERENCES
 // --------------------------------------------------
-// Target the main content area for page injection
 const appContent = document.getElementById('app-content'); 
-// Target the persistent navigation bar
 const bottomNav = document.getElementById('bottom-nav');
 
 
-// --- Unauthenticated Content Rendering ---
+// --------------------------------------------------
+// 2. AUTHENTICATION PAGE RENDERING
+// --------------------------------------------------
 
 function renderSignInPage() {
-    // ⬇️ CRITICAL FIX: Only target appContent, preserving the navigation bar.
     if (!appContent) return; 
 
     appContent.innerHTML = `
-        <div id="auth-screen" style="text-align: center; max-width: 400px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: var(--color-green-accent, #41b883);">PlantPal</h1>
-            <div id="auth-status" style="margin-bottom: 20px;">Please sign in or sign up.</div>
+        <div id="auth-screen" class="auth-wrapper">
+            <h1 class="auth-header">PlantPal</h1>
             
-            <div id="auth-forms">
-                <h2>Sign Up</h2>
-                <input type="email" id="signup-email" placeholder="Email" style="width: 100%; margin-bottom: 10px; padding: 10px;">
-                <input type="password" id="signup-password" placeholder="Password" style="width: 100%; margin-bottom: 20px; padding: 10px;">
-                <button id="signup-button" style="width: 100%; margin-bottom: 20px;">Sign Up</button>
-
-                <hr style="margin: 20px 0;">
-
-                <h2>Sign In</h2>
-                <input type="email" id="signin-email" placeholder="Email" style="width: 100%; margin-bottom: 10px; padding: 10px;">
-                <input type="password" id="signin-password" placeholder="Password" style="width: 100%; margin-bottom: 20px; padding: 10px;">
-                <button id="signin-button" style="width: 100%; margin-bottom: 20px;">Sign In</button>
+            <div id="auth-forms" class="auth-form-container">
+                <h2>Sign in to your account</h2>
+                <input type="email" id="signin-email" placeholder="Email" class="auth-input">
+                <input type="password" id="signin-password" placeholder="Password" class="auth-input">
+                <button id="signin-button" class="auth-button primary-button">Sign In</button>
                 
-                <hr style="margin: 20px 0;">
+                <hr class="auth-separator">
 
-                <p>Or sign in with</p>
-                <button id="google-signin-button" style="width: 100%;">Sign In with Google</button>
+                <button id="google-signin-button" class="auth-button google-button">Sign In with Google</button>
+            </div>
+
+            <div class="auth-footer">
+                <p>New to PlantPal? <a href="#" id="goto-signup" class="auth-link">Sign Up</a></p>
             </div>
         </div>
     `;
 
-    // CRITICAL: Attach listeners immediately after rendering the HTML
-    attachAuthListeners(); 
-    
-    // Hide the bottom navigation bar when on the sign-in screen
-    if (bottomNav) { 
-        bottomNav.style.display = 'none';
-    }
+    // Attach listeners after rendering
+    attachAuthListeners('signin'); 
+    bottomNav.style.display = 'none';
+
+    // Listener to switch to the Sign Up screen
+    document.getElementById('goto-signup')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        renderSignUpPage();
+    });
+}
+
+function renderSignUpPage() {
+    if (!appContent) return; 
+
+    appContent.innerHTML = `
+        <div id="auth-screen" class="auth-wrapper">
+            <h1 class="auth-header">PlantPal</h1>            
+            <div id="auth-forms" class="auth-form-container">
+                <h2>Create your account</h2>
+                <input type="email" id="signup-email" placeholder="Email" class="auth-input">
+                <input type="password" id="signup-password" placeholder="Password" class="auth-input">
+                <button id="signup-button" class="auth-button primary-button">Sign Up</button>
+                
+                <hr class="auth-separator">
+
+                <button id="google-signin-button" class="auth-button google-button">Sign Up with Google</button>
+            </div>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="#" id="goto-signin" class="auth-link">Sign In</a></p>
+            </div>
+        </div>
+    `;
+
+    // Attach listeners for sign up action
+    attachAuthListeners('signup');
+    bottomNav.style.display = 'none';
+
+    // Listener to switch back to the Sign In screen
+    document.getElementById('goto-signin')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        renderSignInPage();
+    });
 }
 
 
 // --- Event Listener Attachment (Auth Logic) ---
 
-function attachAuthListeners() {
+function attachAuthListeners(mode) {
     const authStatus = document.getElementById('auth-status');
     const getVal = (id) => document.getElementById(id)?.value;
+    
+    // --- Determine Primary Action Button ---
+    if (mode === 'signin') {
+        const signinButton = document.getElementById('signin-button');
+        if (signinButton) {
+             signinButton.addEventListener('click', () => 
+                handleAuthAction(signIn, getVal('signin-email'), getVal('signin-password'))
+            );
+        }
+    } else if (mode === 'signup') {
+        const signupButton = document.getElementById('signup-button');
+        if (signupButton) {
+            signupButton.addEventListener('click', () => 
+                handleAuthAction(signUp, getVal('signup-email'), getVal('signup-password'))
+            );
+        }
+    }
 
+    // Google button handles BOTH sign in and sign up automatically via Firebase Auth
+    document.getElementById('google-signin-button')?.addEventListener('click', () => 
+        handleAuthAction(signInWithGoogle)
+    );
+
+    // Helper for Auth Action
     const handleAuthAction = async (actionFn, ...args) => {
         if (authStatus) authStatus.textContent = 'Processing...';
         try {
             await actionFn(...args);
-            // On success, onAuthStateChanged handles the rest
         } catch (error) {
             if (authStatus) authStatus.textContent = `Error: ${error.message}`; 
         }
     };
-
-    // --- Wire up the Buttons ---
-    document.getElementById('signup-button')?.addEventListener('click', () => 
-        handleAuthAction(signUp, getVal('signup-email'), getVal('signup-password'))
-    );
-
-    document.getElementById('signin-button')?.addEventListener('click', () => 
-        handleAuthAction(signIn, getVal('signin-email'), getVal('signin-password'))
-    );
-
-    document.getElementById('google-signin-button')?.addEventListener('click', () => 
-        handleAuthAction(signInWithGoogle)
-    );
 }
 
 
-// --- Authenticated App Rendering Logic ---
+// --------------------------------------------------
+// 3. AUTHENTICATED APP CONTROLLER (Remains the Same)
+// --------------------------------------------------
 
 async function renderAuthenticatedApp(user) {
     try {
-        // 1. Fetch user profile data from Firestore
         let userProfile = await getUserProfile(user.uid);
         
         if (!userProfile) {
-            // If profile is missing, create it.
             userProfile = await createOrUpdateUserProfile(user);
         }
 
-        // 2. Start the main routing and navigation for the app
         startAppNavigation(userProfile, user);
         
     } catch (error) {
         console.error('Failed to load user profile or start app:', error);
-        // If critical failure, render Sign-In Page
         renderSignInPage();
     }
 }
 
 function startAppNavigation(userProfile, userAuth) {
-    // ⬇️ CRITICAL FIX: Show the bottom navigation bar (the check prevents null error)
     if (bottomNav) { 
         bottomNav.style.display = 'flex';
     }
     
-    // Initial page render based on the current URL hash, passing user data
     navigate(userProfile, userAuth);
-
-    // Set up listener for hash changes (for internal navigation)
     window.addEventListener('hashchange', () => navigate(userProfile, userAuth));
 }
 
 
 // --------------------------------------------------
-// 5. AUTH STATE CHANGE HANDLER (The Main Controller)
+// 4. AUTH STATE CHANGE HANDLER (The Main Controller)
 // --------------------------------------------------
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        // User is signed in: Fetch Profile & Render App
         renderAuthenticatedApp(user);
     } else {
-        // User is signed out: Render Sign-In Page
+        // ⬅️ Default to Sign In Page on unauthenticated state
         renderSignInPage();
     }
+
+
 });
+
+

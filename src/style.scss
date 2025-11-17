@@ -6,7 +6,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Roboto:wght@400;700&display=swap');
 
 $font-header: 'Outfit', sans-serif;
-$font-body: 'Outfit', sans-serif;
+$font-body: 'Roboto', sans-serif;
 
 // Define variables for your Dark Theme & Accents
 $color-green-accent: #41b883; 
@@ -54,15 +54,15 @@ button {
     transition: border-color 0.25s, background-color 0.25s;
     margin: 5px;
     
-    // Default primary button style (green)
-    &:not(#signout-button) {
-        background-color: $color-green-accent; 
-        color: $color-dark-bg;
-    }
-    
     &:hover {
         border-color: #ffffff;
     }
+}
+
+// ⬅️ NEW: Default Primary Green Button Style (Targets the .primary-button class in your HTML)
+.primary-button {
+    background-color: $color-green-accent; 
+    color: $color-dark-bg;
 }
 
 // Global Input Base
@@ -85,11 +85,125 @@ input[type="password"],
 
 
 // ----------------------------------------------------
-// 3. ACCOUNT PAGE COMPONENT STYLES
+// 3. NAVIGATION STYLES
+// ----------------------------------------------------
+
+#bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px; 
+    background-color: $color-content-bg; 
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.4);
+    z-index: 100;
+    
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    
+    padding-bottom: env(safe-area-inset-bottom, 10px); 
+    
+    a.nav-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        color: $color-text-light;
+        opacity: 0.6;
+        text-decoration: none;
+        
+        i {
+            font-size: 1.5em; 
+            margin-bottom: 3px;
+        }
+
+        &.active {
+            color: $color-green-accent; 
+            opacity: 1;
+        }
+    }
+}
+
+// ----------------------------------------------------
+// 4. AUTHENTICATION PAGE STYLES
+// ----------------------------------------------------
+
+.auth-wrapper {
+    max-width: 400px; 
+    margin: 40px auto; 
+    padding: 20px;
+    text-align: center;
+    box-sizing: border-box; 
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .auth-header {
+        color: $color-green-accent;
+        margin-bottom: 20px;
+    }
+
+    .auth-status {
+        margin-bottom: 20px;
+        font-weight: 500;
+    }
+}
+
+.auth-form-container {
+    padding: 20px;
+    background-color: $color-content-bg; 
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    
+    h2 {
+        margin-top: 0;
+        font-size: 1.8em;
+    }
+    
+    .auth-input {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+    
+    .auth-button {
+        width: 100%;
+        margin: 10px 0;
+        font-size: 1.1em;
+        font-weight: 700;
+        
+        &.google-button {
+            background-color: #333; 
+            color: $color-text-light;
+            border: 1px solid #555;
+        }
+    }
+}
+
+.auth-separator {
+    border-color: #444;
+    margin: 25px 0;
+}
+
+.auth-footer {
+    margin-top: 25px;
+    font-size: 0.9em;
+    
+    .auth-link {
+        font-weight: 700;
+        text-decoration: none;
+    }
+}
+
+// ----------------------------------------------------
+// 5. ACCOUNT PAGE COMPONENT STYLES
 // ----------------------------------------------------
 
 .account-page-wrapper {
-    padding: 20px;
+    padding-bottom: 80px; 
+    padding-top: 20px;
 }
 
 .account-header {
@@ -106,6 +220,10 @@ input[type="password"],
         border-color: #555;
         margin: 10px 0;
     }
+    
+    h3 {
+        margin-top: 30px;
+    }
 }
 
 // Individual Setting Rows
@@ -118,6 +236,11 @@ input[type="password"],
     &-stack {
         padding: 10px 0;
     }
+}
+
+.setting-label {
+    font-family: $font-body;
+    font-weight: 500;
 }
 
 // ----------------------
@@ -133,38 +256,10 @@ input[type="password"],
     overflow: hidden;
     background-color: #333;
     border: 3px solid $color-green-accent; 
-    cursor: pointer; // Indicate it's clickable
+    cursor: pointer; 
     
-    // NEW: Hover effect for the entire container
     &:hover .profile-edit-overlay {
         opacity: 1;
-    }
-}
-
-.profile-edit-overlay {
-    // ⬅️ NEW STYLES: The semi-transparent overlay
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    
-    // Background: Dark semi-transparent color
-    background-color: rgba(0, 0, 0, 0.6); 
-    
-    // Center the icon
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    // Hidden by default, visible on hover
-    opacity: 0; 
-    transition: opacity 0.25s ease-in-out;
-    
-    i {
-        // Style the pencil icon
-        color: $color-text-light;
-        font-size: 24px; 
     }
 }
 
@@ -172,6 +267,43 @@ input[type="password"],
     width: 100%; 
     height: 100%; 
     object-fit: cover; 
+}
+
+.profile-avatar-initials {
+    width: 100%;
+    height: 100%; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: $color-text-light;
+    background-color: #555;
+    font-family: $font-header; 
+}
+
+.profile-edit-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0; 
+    transition: opacity 0.25s ease-in-out;
+    
+    i {
+        color: $color-text-light;
+        font-size: 24px; 
+    }
+}
+
+.upload-status, .location-status {
+    font-size: 0.8em;
+    color: $color-green-accent;
+    margin-top: 5px;
 }
 
 // ----------------------
@@ -182,14 +314,12 @@ input[type="password"],
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 5px;    
+    margin-top: 5px;
     
     .location-input-field {
         width: 60%;
         padding: 8px;
         margin-right: 5px;
-        height: 35px;
-        border-radius: 8px;
     }
     
     .location-buttons {
@@ -197,10 +327,10 @@ input[type="password"],
         align-items: center;
         justify-content: flex-end; 
         width: 40%;
-
     }
     
     .location-arrow-button { 
+        width: 35px; 
         height: 35px; 
         margin: 0 5px 0 0; 
         font-size: 1.2em; 
@@ -208,19 +338,21 @@ input[type="password"],
         display: flex; 
         align-items: center; 
         justify-content: center;
+        background-color: #333;
         
         i {
-            color: $color-dark-bg;
+            color: $color-green-accent;
         }
     }
     
     .location-save-button { 
-        flex-grow: 1; 
+        flex-grow: 1;
         height: 35px;
-        font-size: 1em;
         display: flex;
         align-items: center;
         justify-content: space-evenly;
+        background-color: $color-green-accent;
+        color: $color-text-light;
     }
 }
 
@@ -238,13 +370,26 @@ input[type="password"],
     input { opacity: 0; width: 0; height: 0; }
     
     .slider {
-        position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; 
-        background-color: #555; transition: .4s; border-radius: 24px;
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #555;
+        transition: .4s;
+        border-radius: 24px;
         
         &::before {
-            position: absolute; content: ""; height: 16px; width: 16px; 
-            left: 4px; bottom: 4px; background-color: white; 
-            transition: .4s; border-radius: 50%;
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
         }
     }
     

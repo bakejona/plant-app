@@ -22,7 +22,8 @@ export async function createOrUpdateUserProfile(user, data) {
     createdAt: new Date(),
     location: data?.location || 'New York, NY', // Default location
     theme: data?.theme || 'dark', // Default theme (dark mode)
-    temperatureUnit: data?.temperatureUnit || 'C' // Default temperature unit
+    temperatureUnit: data?.temperatureUnit || 'C', // Default temperature unit
+    profilePicURL: user.photoURL || null
   };
 
   try {

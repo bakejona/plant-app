@@ -2,6 +2,7 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'; // ⬅️ UPDATED: Added connectFirestoreEmulator
 import { getAuth, connectAuthEmulator } from 'firebase/auth';             // ⬅️ UPDATED: Added connectAuthEmulator
+import { getStorage } from 'firebase/storage'; // ⬅️ NEW IMPORT for Storage
 import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
@@ -20,6 +21,7 @@ const app = initializeApp(firebaseConfig);
 // Initialize and export services
 export const db = getFirestore(app); 
 export const auth = getAuth(app);
+export const storage = getStorage(app); // ⬅️ NEW: Initialize Storage
 export const analytics = getAnalytics(app); 
 
 // ----------------------------------------------------

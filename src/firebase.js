@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth'; 
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'; // ⬅️ UPDATED: Added connectFirestoreEmulator
+import { getAuth, connectAuthEmulator } from 'firebase/auth';             // ⬅️ UPDATED: Added connectAuthEmulator
 import { getAnalytics } from 'firebase/analytics';
 
 const firebaseConfig = {
@@ -20,9 +20,24 @@ const app = initializeApp(firebaseConfig);
 // Initialize and export services
 export const db = getFirestore(app); 
 export const auth = getAuth(app);
-
-// 2. INITIALIZE the service using the imported function
-// Line 22 (or where you are calling it)
 export const analytics = getAnalytics(app); 
+
+// ----------------------------------------------------
+// ⚠️ ENVIRONMENT CHECK: Connect to Local Emulators
+// ----------------------------------------------------
+// This block must run in development only.
+if (import.meta.env.DEV) { 
+  // Get ports from firebase.json for consistency (or use the known ports)
+  const AUTH_PORT = 9101;    // Changed in the previous step
+  const FIRESTORE_PORT = 8081; // Changed in the previous step
+
+  // Connect Auth to local emulator
+  connectAuthEmulator(auth, `http://localhost:${AUTH_PORT}`);
+
+  // Connect Firestore to local emulator
+  connectFirestoreEmulator(db, 'localhost', FIRESTORE_PORT);
+
+  console.log(`Firebase SDK connected to local emulators: Auth:${AUTH_PORT}, Firestore:${FIRESTORE_PORT}`);
+}
 
 export default app;

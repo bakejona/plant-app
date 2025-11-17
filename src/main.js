@@ -1,3 +1,4 @@
+import './style.css' 
 // main.js
 
 // --------------------------------------------------
@@ -107,7 +108,5 @@ onAuthStateChanged(auth, (user) => {
         authForms.style.display = 'block';
         userControls.style.display = 'none';
         
-        userEmailDisplay.textContent = '';
-        authStatus.textContent = 'Please sign in or sign up.';
-    }
+        userEmailDisplay.textContent = '';    }
 });

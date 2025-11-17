@@ -1,0 +1,289 @@
+// src/style.scss
+
+// ----------------------------------------------------
+// 1. FONT IMPORTS & VARIABLES
+// ----------------------------------------------------
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Roboto:wght@400;700&display=swap');
+
+$font-header: 'Outfit', sans-serif;
+$font-body: 'Outfit', sans-serif;
+
+// Define variables for your Dark Theme & Accents
+$color-green-accent: #41b883; 
+$color-dark-bg: #242424;     
+$color-content-bg: #2a2a2a;  
+$color-text-light: rgba(255, 255, 255, 0.87); 
+$color-error: #f44336;       
+
+// ----------------------------------------------------
+// 2. GLOBAL BASE STYLES (Apply Fonts Site-Wide)
+// ----------------------------------------------------
+
+body {
+    // Apply Roboto to all base text
+    font-family: $font-body;
+    background-color: $color-dark-bg;
+    color: $color-text-light;
+    margin: 0;
+}
+
+// Apply bold Outfit font to all main headers
+h1, h2, h3 {
+    font-family: $font-header;
+    font-weight: 700; 
+}
+p, span, label {
+    font-family: $font-body;
+}
+
+// Global Link & Anchor Styles
+a {
+    font-weight: 500;
+    color: $color-green-accent;
+    text-decoration: inherit;
+
+    &:hover {
+        color: darken($color-green-accent, 10%); 
+    }
+}
+
+// Global Button Base
+button {
+    font-family: $font-header;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    cursor: pointer;
+    transition: border-color 0.25s, background-color 0.25s;
+    margin: 5px;
+    
+    // Default primary button style (green)
+    &:not(#signout-button) {
+        background-color: $color-green-accent; 
+        color: $color-dark-bg;
+    }
+    
+    &:hover {
+        border-color: #ffffff;
+    }
+}
+
+// Global Input Base
+input[type="email"], 
+input[type="password"],
+.location-input-field { 
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    background-color: #333; 
+    border: 1px solid #555;
+    color: $color-text-light;
+    border-radius: 4px;
+
+    &:focus {
+      border-color: $color-green-accent; 
+      outline: none;
+    }
+}
+
+
+// ----------------------------------------------------
+// 3. ACCOUNT PAGE COMPONENT STYLES
+// ----------------------------------------------------
+
+.account-page-wrapper {
+    padding: 20px;
+}
+
+.account-header {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.settings-list {
+    max-width: 400px;
+    margin: 0 auto;
+    text-align: left;
+    
+    hr {
+        border-color: #555;
+        margin: 10px 0;
+    }
+}
+
+// Individual Setting Rows
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+
+    &-stack {
+        padding: 10px 0;
+    }
+}
+
+// ----------------------
+// AVATAR & UPLOAD STYLES
+// ----------------------
+
+.profile-avatar-container {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%; 
+    margin: 0 auto 10px; 
+    overflow: hidden;
+    background-color: #333;
+    border: 3px solid $color-green-accent; 
+}
+
+.profile-avatar-img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+}
+
+.profile-avatar-initials {
+    width: 100%;
+    height: 100%; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: $color-text-light;
+    background-color: #555;
+    font-family: $font-header; 
+}
+
+.edit-icon-overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    background-color: $color-green-accent;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+    transform: translate(5px, 5px);
+
+    i {
+        color: $color-dark-bg; 
+        font-size: 14px;
+    }
+}
+.upload-status, .location-status {
+    font-size: 0.8em;
+    color: $color-green-accent;
+    margin-top: 5px;
+}
+
+// ----------------------
+// LOCATION INPUT & BUTTON STYLES
+// ----------------------
+
+.location-input-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 5px;
+    
+    .location-input-field {
+        width: 60%;
+        padding: 8px;
+        margin-right: 5px;
+    }
+    
+    .location-buttons {
+        display: flex; 
+        align-items: center;
+        justify-content: flex-end; 
+        width: 40%;
+    }
+    
+    .location-arrow-button { 
+        height: 35px; 
+        margin: 0 5px 0 0; 
+        font-size: 1.2em; 
+        border-radius: 8px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        
+        i {
+            color: $color-dark-bg;
+        }
+    }
+    
+    .location-save-button { 
+        flex-grow: 1; 
+        height: 35px;
+    }
+}
+
+// ----------------------
+// TOGGLE SWITCH STYLES
+// ----------------------
+
+/* Base Switch Structure (Dark Mode Toggle) */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 24px;
+    
+    input { opacity: 0; width: 0; height: 0; }
+    
+    .slider {
+        position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; 
+        background-color: #555; transition: .4s; border-radius: 24px;
+        
+        &::before {
+            position: absolute; content: ""; height: 16px; width: 16px; 
+            left: 4px; bottom: 4px; background-color: white; 
+            transition: .4s; border-radius: 50%;
+        }
+    }
+    
+    input:checked + .slider { background-color: $color-green-accent; }
+    input:checked + .slider::before { transform: translateX(16px); }
+}
+
+/* Radio Toggle Switch (Temp Unit) */
+.toggle-switch {
+    display: flex;
+    border: 1px solid #555;
+    border-radius: 20px;
+    overflow: hidden;
+    
+    .temp-label {
+        padding: 5px 10px;
+        cursor: pointer;
+        transition: background-color 0.2s, color 0.2s;
+    }
+
+    input[type="radio"]:checked + .temp-label {
+        background-color: $color-green-accent;
+        color: $color-dark-bg;
+        border-color: $color-green-accent;
+    }
+    
+    input[type="radio"] {
+        display: none;
+    }
+}
+
+.signout-container {
+    margin-top: 30px;
+    .signout-button {
+        background-color: $color-error;
+        color: $color-text-light;
+        width: 100%;
+        font-family: $font-header;
+    }
+}

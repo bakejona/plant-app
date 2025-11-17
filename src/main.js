@@ -1,5 +1,5 @@
 // src/main.js
-import './style.css';
+import './style.scss';
 import { auth } from './firebase.js'; 
 import { onAuthStateChanged } from 'firebase/auth';
 import { signUp, signIn, signInWithGoogle } from './authService.js';

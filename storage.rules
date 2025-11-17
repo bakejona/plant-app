@@ -1,0 +1,14 @@
+// storage.rules
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Only allow authenticated users to read and write
+    match /users/{userId}/profile.jpg {
+      // Allow an authenticated user to write (upload/overwrite) to their own folder.
+      allow write: if request.auth.uid == userId;
+      // Allow the user or anyone else to read the profile picture once uploaded.
+      allow read;
+    }
+  }
+}   

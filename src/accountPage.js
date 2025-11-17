@@ -18,15 +18,15 @@ export function renderAccountPage(container, profile, authUser) {
     const locationInput = document.getElementById('location-text-input');
     const saveLocationButton = document.getElementById('save-location-button');
     const locationStatus = document.getElementById('location-status');
+    const uploadStatus = document.getElementById('upload-status'); // Re-reference
 
     // --- Event Listeners ---
     
     // 1. Sign Out
     document.getElementById('signout-button')?.addEventListener('click', signOutUser);
 
-    // 2. Profile Picture Upload Listener (Manual Trigger)
-    // The listener is on the new 'edit-icon-overlay' element (trigger-upload-button)
-    document.getElementById('trigger-upload-button')?.addEventListener('click', () => {
+    // 2. ⬅️ CRITICAL FIX: Profile Picture Upload Listener (Click anywhere on the container)
+    document.getElementById('upload-trigger-area')?.addEventListener('click', () => {
         document.getElementById('upload-pic-input')?.click();
     });
 
@@ -35,7 +35,6 @@ export function renderAccountPage(container, profile, authUser) {
         const file = e.target.files[0];
         if (!file) return;
 
-        const uploadStatus = document.getElementById('upload-status');
         uploadStatus.textContent = 'Uploading...'; 
 
         try {
@@ -50,7 +49,7 @@ export function renderAccountPage(container, profile, authUser) {
             uploadStatus.textContent = `Upload failed: ${error.message}`;
         }
     });
-
+    
     // 4. Location Save Button (Text Input and Validation)
     saveLocationButton?.addEventListener('click', async () => {
         const newLocationString = locationInput.value.trim();
@@ -153,12 +152,12 @@ function generateAccountHTML(profile) {
         <div class="account-page-wrapper">
             <header class="account-header">
                 
-                <div class="profile-avatar-container">
+                <div id="upload-trigger-area" class="profile-avatar-container">
                     ${profilePicURL 
                         ? `<img src="${profilePicURL}" alt="Profile Picture" class="profile-avatar-img">`
                         : `<div class="profile-avatar-initials">${initials}</div>`
                     }
-                    <div id="trigger-upload-button" class="edit-icon-overlay">
+                    <div class="profile-edit-overlay">
 <i class="fa-solid fa-pen-to-square"></i>                    </div>
                 </div>
                 
@@ -184,7 +183,7 @@ function generateAccountHTML(profile) {
                         
                         <div class="location-buttons">
                             <button id="use-current-location-button" class="upload-pic-button location-arrow-button">
-<i class="fa-solid fa-location-arrow"></i>                            </button>
+<i class="fa-solid fa-location-arrow"></i>                       </button>
                             <button id="save-location-button" class="upload-pic-button location-save-button">Save</button>
                         </div>
                     </div>

@@ -41,10 +41,6 @@ a {
     font-weight: 500;
     color: $color-green-accent;
     text-decoration: inherit;
-
-    &:hover {
-        color: darken($color-green-accent, 10%); 
-    }
 }
 
 // Global Button Base
@@ -129,6 +125,7 @@ input[type="password"],
 // ----------------------
 
 .profile-avatar-container {
+    position: relative; 
     width: 200px;
     height: 200px;
     border-radius: 50%; 
@@ -136,51 +133,45 @@ input[type="password"],
     overflow: hidden;
     background-color: #333;
     border: 3px solid $color-green-accent; 
+    cursor: pointer; // Indicate it's clickable
+    
+    // NEW: Hover effect for the entire container
+    &:hover .profile-edit-overlay {
+        opacity: 1;
+    }
+}
+
+.profile-edit-overlay {
+    // ⬅️ NEW STYLES: The semi-transparent overlay
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    // Background: Dark semi-transparent color
+    background-color: rgba(0, 0, 0, 0.6); 
+    
+    // Center the icon
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    // Hidden by default, visible on hover
+    opacity: 0; 
+    transition: opacity 0.25s ease-in-out;
+    
+    i {
+        // Style the pencil icon
+        color: $color-text-light;
+        font-size: 24px; 
+    }
 }
 
 .profile-avatar-img { 
     width: 100%; 
     height: 100%; 
     object-fit: cover; 
-}
-
-.profile-avatar-initials {
-    width: 100%;
-    height: 100%; 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-    color: $color-text-light;
-    background-color: #555;
-    font-family: $font-header; 
-}
-
-.edit-icon-overlay {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 32px;
-    height: 32px;
-    background-color: $color-green-accent;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-    z-index: 10;
-    transform: translate(5px, 5px);
-
-    i {
-        color: $color-dark-bg; 
-        font-size: 14px;
-    }
-}
-.upload-status, .location-status {
-    font-size: 0.8em;
-    color: $color-green-accent;
-    margin-top: 5px;
 }
 
 // ----------------------
@@ -191,12 +182,14 @@ input[type="password"],
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 5px;
+    margin-top: 5px;    
     
     .location-input-field {
         width: 60%;
         padding: 8px;
         margin-right: 5px;
+        height: 35px;
+        border-radius: 8px;
     }
     
     .location-buttons {
@@ -204,6 +197,7 @@ input[type="password"],
         align-items: center;
         justify-content: flex-end; 
         width: 40%;
+
     }
     
     .location-arrow-button { 
@@ -223,6 +217,10 @@ input[type="password"],
     .location-save-button { 
         flex-grow: 1; 
         height: 35px;
+        font-size: 1em;
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
     }
 }
 
@@ -281,8 +279,9 @@ input[type="password"],
 .signout-container {
     margin-top: 30px;
     .signout-button {
-        background-color: $color-error;
-        color: $color-text-light;
+        border: 2px solid $color-error;
+        background-color: transparent;
+        color: $color-error;
         width: 100%;
         font-family: $font-header;
     }

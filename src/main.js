@@ -1,112 +1,141 @@
-import './style.css' 
-// main.js
-
-// --------------------------------------------------
-// 1. IMPORTS
-// --------------------------------------------------
-
-// Import the necessary Auth instance from your initialized firebase file
+// src/main.js
+import './style.css';
 import { auth } from './firebase.js'; 
-
-// Import the specific authentication functions, including the new one
-import { signUp, signIn, signOutUser, signInWithGoogle } from './authService.js';
-
-// Import the state listener
 import { onAuthStateChanged } from 'firebase/auth';
-
-// --------------------------------------------------
-// 2. DOM ELEMENT REFERENCES
-// --------------------------------------------------
-
-const authForms = document.getElementById('auth-forms');
-const userControls = document.getElementById('user-controls');
-const authStatus = document.getElementById('auth-status');
-const userEmailDisplay = document.getElementById('user-email-display');
-
-const signupEmailInput = document.getElementById('signup-email');
-const signupPasswordInput = document.getElementById('signup-password');
-const signinEmailInput = document.getElementById('signin-email');
-const signinPasswordInput = document.getElementById('signin-password');
-
-// ADDED REFERENCE FOR GOOGLE BUTTON
-const googleSignInButton = document.getElementById('google-signin-button');
+import { signUp, signIn, signInWithGoogle } from './authService.js';
+import { createOrUpdateUserProfile, getUserProfile } from './userService.js'; 
+import { navigate } from './router.js'; 
+// NOTE: This file assumes router.js and accountPage.js exist and are configured.
 
 
 // --------------------------------------------------
-// 3. EVENT LISTENERS
+// 1. DOM ELEMENT REFERENCES (CORRECTED)
 // --------------------------------------------------
+// Target the main content area for page injection
+const appContent = document.getElementById('app-content'); 
+// Target the persistent navigation bar
+const bottomNav = document.getElementById('bottom-nav');
 
-// --- SIGN UP ---
-document.getElementById('signup-button')?.addEventListener('click', async () => {
-    const email = signupEmailInput.value;
-    const password = signupPasswordInput.value;
-    authStatus.textContent = 'Signing up...';
-    try {
-        await signUp(email, password);
-        // Success handled by onAuthStateChanged
-    } catch (error) {
-        authStatus.textContent = `Sign Up Failed: ${error.message}`;
+
+// --- Unauthenticated Content Rendering ---
+
+function renderSignInPage() {
+    // ⬇️ CRITICAL FIX: Only target appContent, preserving the navigation bar.
+    if (!appContent) return; 
+
+    appContent.innerHTML = `
+        <div id="auth-screen" style="text-align: center; max-width: 400px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: var(--color-green-accent, #41b883);">PlantPal</h1>
+            <div id="auth-status" style="margin-bottom: 20px;">Please sign in or sign up.</div>
+            
+            <div id="auth-forms">
+                <h2>Sign Up</h2>
+                <input type="email" id="signup-email" placeholder="Email" style="width: 100%; margin-bottom: 10px; padding: 10px;">
+                <input type="password" id="signup-password" placeholder="Password" style="width: 100%; margin-bottom: 20px; padding: 10px;">
+                <button id="signup-button" style="width: 100%; margin-bottom: 20px;">Sign Up</button>
+
+                <hr style="margin: 20px 0;">
+
+                <h2>Sign In</h2>
+                <input type="email" id="signin-email" placeholder="Email" style="width: 100%; margin-bottom: 10px; padding: 10px;">
+                <input type="password" id="signin-password" placeholder="Password" style="width: 100%; margin-bottom: 20px; padding: 10px;">
+                <button id="signin-button" style="width: 100%; margin-bottom: 20px;">Sign In</button>
+                
+                <hr style="margin: 20px 0;">
+
+                <p>Or sign in with</p>
+                <button id="google-signin-button" style="width: 100%;">Sign In with Google</button>
+            </div>
+        </div>
+    `;
+
+    // CRITICAL: Attach listeners immediately after rendering the HTML
+    attachAuthListeners(); 
+    
+    // Hide the bottom navigation bar when on the sign-in screen
+    if (bottomNav) { 
+        bottomNav.style.display = 'none';
     }
-});
+}
 
-// --- SIGN IN ---
-document.getElementById('signin-button')?.addEventListener('click', async () => {
-    const email = signinEmailInput.value;
-    const password = signinPasswordInput.value;
-    authStatus.textContent = 'Signing in...';
+
+// --- Event Listener Attachment (Auth Logic) ---
+
+function attachAuthListeners() {
+    const authStatus = document.getElementById('auth-status');
+    const getVal = (id) => document.getElementById(id)?.value;
+
+    const handleAuthAction = async (actionFn, ...args) => {
+        if (authStatus) authStatus.textContent = 'Processing...';
+        try {
+            await actionFn(...args);
+            // On success, onAuthStateChanged handles the rest
+        } catch (error) {
+            if (authStatus) authStatus.textContent = `Error: ${error.message}`; 
+        }
+    };
+
+    // --- Wire up the Buttons ---
+    document.getElementById('signup-button')?.addEventListener('click', () => 
+        handleAuthAction(signUp, getVal('signup-email'), getVal('signup-password'))
+    );
+
+    document.getElementById('signin-button')?.addEventListener('click', () => 
+        handleAuthAction(signIn, getVal('signin-email'), getVal('signin-password'))
+    );
+
+    document.getElementById('google-signin-button')?.addEventListener('click', () => 
+        handleAuthAction(signInWithGoogle)
+    );
+}
+
+
+// --- Authenticated App Rendering Logic ---
+
+async function renderAuthenticatedApp(user) {
     try {
-        await signIn(email, password);
-        // Success handled by onAuthStateChanged
-    } catch (error) {
-        authStatus.textContent = `Sign In Failed: ${error.message}`;
-    }
-});
+        // 1. Fetch user profile data from Firestore
+        let userProfile = await getUserProfile(user.uid);
+        
+        if (!userProfile) {
+            // If profile is missing, create it.
+            userProfile = await createOrUpdateUserProfile(user);
+        }
 
-// --- SIGN OUT ---
-document.getElementById('signout-button')?.addEventListener('click', async () => {
-    authStatus.textContent = 'Signing out...';
-    await signOutUser();
-    // Success handled by onAuthStateChanged
-});
-
-// --- GOOGLE SIGN IN ---
-googleSignInButton?.addEventListener('click', async () => {
-    authStatus.textContent = 'Signing in with Google...';
-    try {
-        await signInWithGoogle();
-        // Success handled by onAuthStateChanged
+        // 2. Start the main routing and navigation for the app
+        startAppNavigation(userProfile, user);
+        
     } catch (error) {
-        authStatus.textContent = `Google Sign In Failed: ${error.message}`;
+        console.error('Failed to load user profile or start app:', error);
+        // If critical failure, render Sign-In Page
+        renderSignInPage();
     }
-});
+}
+
+function startAppNavigation(userProfile, userAuth) {
+    // ⬇️ CRITICAL FIX: Show the bottom navigation bar (the check prevents null error)
+    if (bottomNav) { 
+        bottomNav.style.display = 'flex';
+    }
+    
+    // Initial page render based on the current URL hash, passing user data
+    navigate(userProfile, userAuth);
+
+    // Set up listener for hash changes (for internal navigation)
+    window.addEventListener('hashchange', () => navigate(userProfile, userAuth));
+}
 
 
 // --------------------------------------------------
-// 4. AUTH STATE CHANGE HANDLER
+// 5. AUTH STATE CHANGE HANDLER (The Main Controller)
 // --------------------------------------------------
 
-/**
- * Listens for authentication state changes and updates the UI accordingly.
- */
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        // User is signed in: HIDE forms, SHOW user controls
-        authForms.style.display = 'none';
-        userControls.style.display = 'block';
-        
-        userEmailDisplay.textContent = user.email;
-        authStatus.textContent = `Signed in as ${user.email}`;
-
-        // Clear forms on successful sign-in
-        signupEmailInput.value = '';
-        signupPasswordInput.value = '';
-        signinEmailInput.value = '';
-        signinPasswordInput.value = '';
-
+        // User is signed in: Fetch Profile & Render App
+        renderAuthenticatedApp(user);
     } else {
-        // User is signed out: SHOW forms, HIDE user controls
-        authForms.style.display = 'block';
-        userControls.style.display = 'none';
-        
-        userEmailDisplay.textContent = '';    }
+        // User is signed out: Render Sign-In Page
+        renderSignInPage();
+    }
 });

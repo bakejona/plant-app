@@ -2,7 +2,7 @@
 
 // Import the 'auth' instance you initialized in firebase.js
 import { auth } from './firebase'; 
-import { createOrUpdateUserProfile } from './userService'; // ⬅️ NEW IMPORT
+import { createOrUpdateUserProfile } from './userService'; 
 
 // Import the necessary Auth functions from the modular SDK
 import { 
@@ -10,8 +10,47 @@ import {
   signInWithEmailAndPassword, 
   signOut,
   GoogleAuthProvider,     
-  signInWithPopup         
+  signInWithPopup,
+  sendPasswordResetEmail, // ⬅️ NEW IMPORT
 } from 'firebase/auth';
+
+/**
+ * Maps Firebase error codes to user-friendly messages.
+ * @param {string} code - Firebase error code (e.g., 'auth/user-not-found').
+ * @returns {string} User-friendly message.
+ */
+function getErrorMessage(code) {
+    switch (code) {
+        case 'auth/user-not-found':
+            return 'No user found with that email address.';
+        case 'auth/wrong-password':
+            return 'Incorrect password. Please try again.';
+        case 'auth/invalid-credential':
+             return 'Invalid email or password.';
+        case 'auth/email-already-in-use':
+            return 'This email is already in use.';
+        case 'auth/weak-password':
+            return 'Password should be at least 6 characters.';
+        default:
+            return 'An unknown error occurred. Please try again.';
+    }
+}
+
+/**
+ * Sends a password reset email to the user.
+ * @param {string} email 
+ * @returns {Promise<void>}
+ */
+export async function sendPasswordReset(email) { // ⬅️ NEW FUNCTION
+    try {
+        await sendPasswordResetEmail(auth, email);
+        return { success: true, message: `Password reset email sent to ${email}!` };
+    } catch (error) {
+        const message = getErrorMessage(error.code);
+        console.error('Password reset error:', error.message);
+        throw new Error(message);
+    }
+}
 
 /**
  * Signs up a new user with email and password and creates a Firestore profile.
@@ -22,15 +61,12 @@ import {
 export async function signUp(email, password) {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    
-    // CALL FIRESTORE FUNCTION AFTER SUCCESSFUL SIGN UP
     await createOrUpdateUserProfile(userCredential.user);
-    
     console.log('User signed up successfully:', userCredential.user);
     return userCredential;
   } catch (error) {
-    console.error('Sign up error:', error.message);
-    throw error; // Re-throw the error for the component to handle
+    // ⬅️ UPDATED: Use helper function for user-friendly error
+    throw new Error(getErrorMessage(error.code));
   }
 }
 
@@ -43,15 +79,12 @@ export async function signUp(email, password) {
 export async function signIn(email, password) {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-    // ⬅️ CALL FIRESTORE FUNCTION AFTER SUCCESSFUL SIGN IN
     await createOrUpdateUserProfile(userCredential.user);
-
     console.log('User signed in successfully:', userCredential.user);
     return userCredential;
   } catch (error) {
-    console.error('Sign in error:', error.message);
-    throw error;
+    // ⬅️ UPDATED: Use helper function for user-friendly error
+    throw new Error(getErrorMessage(error.code));
   }
 }
 
@@ -63,15 +96,12 @@ export async function signInWithGoogle() {
   try {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
-
-    // ⬅️ CALL FIRESTORE FUNCTION AFTER SUCCESSFUL GOOGLE SIGN IN
     await createOrUpdateUserProfile(result.user);
-    
     console.log('Google Sign In successful:', result.user);
     return result;
   } catch (error) {
-    console.error('Google Sign In error:', error.message);
-    throw error;
+    // ⬅️ UPDATED: Use helper function for user-friendly error
+    throw new Error(getErrorMessage(error.code));
   }
 }
 

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "serve dist -s -l 8080"  // <--- Add this line
+    "start": "serve dist -s -l 8080"
   },
   "devDependencies": {
     "firebase-tools": "^14.17.0",

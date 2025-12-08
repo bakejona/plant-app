@@ -4,7 +4,7 @@ import { renderAccountPage } from './accountPage.js';
 import { renderHomePage } from './homePage.js'; 
 import { renderMyPlantsPage } from './myPlantsPage.js';
 import { renderSearchPage } from './searchPage.js';
-import { renderPlantDetailPage } from './plantDetailPage.js'; // Ensure this is imported
+import { renderPlantDetailPage } from './plantDetailPage.js'; 
 import { fetchWeather } from './weatherService.js'; 
 
 const appContent = document.getElementById('app-content');
@@ -19,10 +19,8 @@ export async function navigate(userProfile, userAuth) {
     let page = 'home';
     let param = null;
 
-    // ⬇️ CRITICAL FIX: Check if hash starts with the prefix for dynamic routes
     if (hash.startsWith('#plantdetail/')) {
         page = 'plantdetail';
-        // Extract the ID part (everything after the slash)
         param = hash.split('/')[1]; 
     } else if (hash === '' || hash === '#home') {
         page = 'home';
@@ -52,7 +50,8 @@ export async function navigate(userProfile, userAuth) {
     // Render Page
     switch (page) {
         case 'home':
-            renderHomePage(appContent, userProfile, weatherData); 
+            // 🏆 FIXED: Passed 'userAuth' as the 4th argument
+            renderHomePage(appContent, userProfile, weatherData, userAuth); 
             break;
 
         case 'myplants':
@@ -64,7 +63,6 @@ export async function navigate(userProfile, userAuth) {
             break;
 
         case 'plantdetail':
-            // Pass the extracted ID (param) to the detail renderer
             await renderPlantDetailPage(appContent, param, userProfile, userAuth); 
             break;
 
@@ -76,16 +74,13 @@ export async function navigate(userProfile, userAuth) {
             appContent.innerHTML = '<h1>404 - Page Not Found</h1><p>The requested page could not be found.</p>';
     }
 
-    // Highlight active nav icon (checking base route only)
-    const baseHash = hash.split('/')[0] || '#home';
-    highlightActiveNav(baseHash);
+    highlightActiveNav(hash.split('/')[0] || '#home');
 }
 
 function highlightActiveNav(currentHash) {
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
         const linkHash = link.getAttribute('href');
-        // Match base hash (e.g. #home)
         if (linkHash === currentHash) {
             link.classList.add('active');
         }

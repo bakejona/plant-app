@@ -158,7 +158,7 @@ input[type="password"],
     
     .forgot-password-container {
         text-align: right; margin-top: -10px; margin-bottom: 20px;
-        .auth-link { font-family: $font-header; font-size: 0.9em; color: rgba(255,255,255,0.6); }
+        .auth-link { font-family: $font-header; font-size: 0.9em; color: $color-green-accent; }
     }
 
     .auth-button {
@@ -612,4 +612,365 @@ input[type="password"],
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+// ----------------------------------------------------
+// 12. UI FEEDBACK (Empty States & Errors)
+// ----------------------------------------------------
+
+// Nice looking empty state for Home/My Plants
+.empty-state-card {
+    text-align: center;
+    padding: 40px 20px;
+    background-color: rgba(255, 255, 255, 0.03); // Very subtle light overlay
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    i {
+        font-size: 3.5rem;
+        color: rgba(255, 255, 255, 0.2);
+        margin-bottom: 15px;
+    }
+
+    h3 {
+        font-size: 1.2rem;
+        margin-bottom: 5px;
+        color: $color-text-light;
+    }
+
+    p {
+        color: #888;
+        font-size: 0.95rem;
+        margin-bottom: 20px;
+        max-width: 250px;
+    }
+}
+
+// Login/Signup Error Box
+.auth-error-message {
+    background-color: rgba(244, 67, 54, 0.15);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    color: #ff8a80; // Light red text
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    display: none; // Hidden by default
+    text-align: center;
+    animation: fadeIn 0.3s ease-out;
+    
+    i { margin-right: 8px; }
+}
+
+// ----------------------------------------------------
+// 13. ADD PLANT MODAL STYLES (Fixed & Updated)
+// ----------------------------------------------------
+
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 2000; // High z-index to sit on top of everything
+    display: flex; align-items: center; justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal-card {
+    background-color: $color-content-bg;
+    width: 90%; max-width: 400px;
+    border-radius: 24px;
+    padding: 25px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex; flex-direction: column; gap: 20px;
+    max-height: 90vh;
+    overflow-y: auto; // Allow scrolling if content is tall
+}
+
+.modal-close-btn {
+    position: absolute; top: 15px; right: 15px;
+    background: transparent; border: none;
+    color: rgba(255,255,255,0.5); font-size: 1.5rem; cursor: pointer;
+    padding: 5px;
+    &:hover { color: $color-error; }
+}
+
+.modal-header {
+    text-align: center;
+    h2 { color: $color-green-accent; margin-bottom: 5px; font-size: 1.5rem; }
+    p { color: #aaa; margin: 0; font-size: 0.9em; }
+}
+
+// Image Preview
+.image-upload-wrapper {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+
+.image-preview {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background-size: cover; background-position: center;
+    border: 3px solid $color-green-accent;
+    background-color: $color-dark-bg;
+}
+
+.upload-btn-label {
+    font-size: 0.9rem; color: $color-text-light;
+    cursor: pointer; text-decoration: underline;
+    &:hover { color: $color-green-accent; }
+    input[type="file"] { display: none; }
+}
+
+// Form Inputs
+.modal-form-group {
+    display: flex; flex-direction: column; gap: 8px;
+    label { font-size: 0.9rem; color: #ccc; margin-left: 5px; font-weight: 500; }
+    input[type="text"] { 
+        background-color: $color-dark-bg; 
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 12px; border-radius: 12px; color: white;
+        &:focus { outline: 1px solid $color-green-accent; }
+    }
+}
+
+// ⬅️ NEW: Watering Option Buttons
+.watering-options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.water-opt-btn {
+    background-color: $color-dark-bg;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.7);
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        background-color: lighten($color-dark-bg, 5%);
+    }
+
+    &.selected {
+        background-color: $color-green-accent;
+        color: $color-dark-bg;
+        border-color: $color-green-accent;
+        font-weight: 700;
+    }
+    
+    // Make the "Not Sure" button span full width
+    &.full-width {
+        grid-column: span 2;
+    }
+}
+
+// ----------------------------------------------------
+// 14. MY PLANTS GALLERY (Large Grid)
+// ----------------------------------------------------
+
+.my-plant-gallery-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; // 2 Columns
+    gap: 15px;
+}
+
+.gallery-card {
+    position: relative;
+    max-height: 200px; // Tall, large image
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+
+}
+
+.gallery-image {
+    width: 100%; height: 100%;
+    background-size: cover; background-position: center;
+}
+
+.gallery-overlay {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    padding: 20px 10px 10px 10px;
+    
+    h3 {
+        margin: 0;
+        color: white;
+        font-size: 1rem;
+        text-align: center;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+}
+
+// ----------------------------------------------------
+// 14. MY PLANTS GALLERY (Clean Grid)
+// ----------------------------------------------------
+
+.my-plant-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); // 3 Columns for smaller images
+    gap: 10px; // Tighter gap
+}
+
+.gallery-card {
+    position: relative;
+    aspect-ratio: 1 / 1; // Perfect squares
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    // REMOVED SHADOWS & OVERLAYS
+    background-color: $color-content-bg; // Fallback color
+    transition: transform 0.2s, opacity 0.2s;
+
+    &:hover { 
+        transform: scale(0.98); 
+        opacity: 0.9;
+    }
+}
+
+.gallery-image {
+    width: 100%; height: 100%;
+    background-size: cover; background-position: center;
+}
+
+// ----------------------------------------------------
+// 15. MY PLANT DETAIL & CARE DASHBOARD
+// ----------------------------------------------------
+
+.delete-icon-btn {
+    position: absolute; top: 20px; right: 20px;
+    width: 45px; height: 45px; border-radius: 50%;
+    background-color: rgba(244, 67, 54, 0.8);
+    color: white; border: none;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+    &:hover { background-color: $color-error; }
+}
+
+.care-dashboard {
+    display: flex; gap: 10px; margin: 20px 0;
+}
+
+.care-card {
+    flex: 1;
+    background-color: $color-content-bg;
+    padding: 15px; border-radius: 16px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    
+    i { font-size: 1.5rem; margin-bottom: 8px; }
+    span { font-size: 0.75rem; color: #aaa; text-transform: uppercase; }
+    strong { font-size: 1.1rem; color: white; margin: 5px 0 10px 0; }
+    
+    .action-chip {
+        background-color: $color-dark-bg;
+        border: 1px solid rgba(255,255,255,0.2);
+        color: $color-green-accent;
+        padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+        &:hover { background-color: $color-green-accent; color: $color-dark-bg; }
+    }
+}
+
+// ----------------------------------------------------
+// DANGER / DELETE BUTTON STYLE
+// ----------------------------------------------------
+
+.danger-button {
+    background-color: transparent;
+    border: 2px solid $color-error; // Red Border
+    color: $color-error;            // Red Text
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    font-family: $font-header;
+    border-radius: 12px; // Match input radius
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 40px; // Spacing from content above
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    &:hover {
+        background-color: rgba(244, 67, 54, 0.1); // Subtle red tint on hover
+    }
+    
+    &:active {
+        transform: scale(0.98);
+    }
+}
+
+// ----------------------------------------------------
+// 16. HOME PAGE TASK STYLES
+// ----------------------------------------------------
+
+.task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.task-card {
+    background-color: $color-content-bg;
+    padding: 12px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.task-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+    border: 2px solid $color-green-accent;
+}
+
+.task-info {
+    flex-grow: 1;
+    h4 {
+        margin: 0 0 5px 0;
+        font-size: 1.1rem;
+        color: white;
+    }
+    p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #ccc;
+    }
+}
+
+.task-done-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background-color: $color-dark-bg;
+    color: $color-green-accent;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: none; // Ensure no shadow based on global reset
+
+    &:hover {
+        background-color: $color-green-accent;
+        color: $color-dark-bg;
+        transform: scale(1.1);
+    }
 }

@@ -1,207 +1,163 @@
 // src/main.js
 
+// 1. Import configured instances from your firebase.js file
+import { auth, db } from './firebase.js'; 
+
+// 2. Import specific functions needed for logic
+import { 
+    onAuthStateChanged, 
+    signInWithEmailAndPassword, 
+    createUserWithEmailAndPassword 
+} from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { navigate } from './router.js';
 import './style.scss';
-import { auth } from './firebase.js'; 
-import { onAuthStateChanged } from 'firebase/auth';
-// Added sendPasswordReset for password recovery flow
-import { signUp, signIn, signInWithGoogle, sendPasswordReset } from './authService.js'; 
-import { createOrUpdateUserProfile, getUserProfile } from './userService.js'; 
-import { navigate } from './router.js'; 
 
+// ----------------------------------------------------
+// AUTHENTICATION UI & LOGIC
+// ----------------------------------------------------
 
-// --------------------------------------------------
-// 1. DOM ELEMENT REFERENCES (Consolidated and checked for existence)
-// --------------------------------------------------
-const appContent = document.getElementById('app-content'); 
-const bottomNav = document.getElementById('bottom-nav');
-
-if (!appContent) {
-    console.error("CRITICAL ERROR: Main content container (#app-content) not found in DOM.");
-}
-
-// --------------------------------------------------
-// 2. AUTHENTICATION PAGE RENDERING
-// --------------------------------------------------
-
-function renderSignInPage() {
-    if (!appContent) return; 
-
-    appContent.innerHTML = `
-        <div id="auth-screen" class="auth-wrapper">
+function renderAuth(container) {
+    container.innerHTML = `
+        <div class="auth-wrapper">
             <h1 class="auth-header">PlantPal</h1>
-            <div id="auth-status" class="auth-status">Please sign in.</div>
             
-            <div id="auth-forms" class="auth-form-container">
-                <h2>Sign In</h2>
-                <input type="email" id="signin-email" placeholder="Email" class="auth-input">
-                <input type="password" id="signin-password" placeholder="Password" class="auth-input">
+            <div id="auth-error-box" class="auth-error-message"></div>
+
+            <div class="auth-form-container fade-in">
+                <h2 id="auth-title">Sign In</h2>
                 
-                <div class="forgot-password-container">
-                    <a href="#" id="forgot-password-link" class="auth-link">Forgot Password?</a>
+                <input type="email" id="auth-email" class="auth-input" placeholder="Email" required>
+                <input type="password" id="auth-password" class="auth-input" placeholder="Password" required>
+                
+                <button id="auth-action-btn" class="primary-button auth-button">Sign In</button>
+                
+                <div class="auth-footer">
+                    <span id="auth-footer-text">Don't have an account?</span>
+                    <a href="#" id="auth-toggle-btn" style="margin-left: 5px;">Sign Up</a>
                 </div>
-
-                <button id="signin-button" class="auth-button primary-button">Sign In</button>
-                
-                <hr class="auth-separator">
-
-                <button id="google-signin-button" class="auth-button google-button">Sign In with Google</button>
-            </div>
-
-            <div class="auth-footer">
-                <p>New to PlantPal? <a href="#" id="goto-signup" class="auth-link">Sign Up</a></p>
             </div>
         </div>
     `;
 
-    // Attach listeners after rendering
-    attachAuthListeners('signin'); 
-    if (bottomNav) bottomNav.style.display = 'none';
+    const emailInput = document.getElementById('auth-email');
+    const passwordInput = document.getElementById('auth-password');
+    const actionBtn = document.getElementById('auth-action-btn');
+    const toggleBtn = document.getElementById('auth-toggle-btn');
+    const title = document.getElementById('auth-title');
+    const errorBox = document.getElementById('auth-error-box');
 
-    // Listener to switch to the Sign Up screen
-    document.getElementById('goto-signup')?.addEventListener('click', (e) => {
+    let isLogin = true;
+
+    // Toggle between Login and Signup
+    toggleBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        renderSignUpPage();
+        isLogin = !isLogin;
+        title.textContent = isLogin ? 'Sign In' : 'Create Account';
+        actionBtn.textContent = isLogin ? 'Sign In' : 'Sign Up';
+        document.getElementById('auth-footer-text').textContent = isLogin ? "Don't have an account?" : "Already have an account?";
+        toggleBtn.textContent = isLogin ? 'Sign Up' : 'Sign In';
+        errorBox.style.display = 'none';
     });
 
-    // Forgot Password Listener
-    document.getElementById('forgot-password-link')?.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const authStatus = document.getElementById('auth-status');
-        const email = document.getElementById('signin-email')?.value;
-
-        if (!email) {
-            if (authStatus) authStatus.textContent = 'Please enter your email above to reset password.';
+    // Handle Form Submit
+    actionBtn.addEventListener('click', async () => {
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        
+        // Basic Validation
+        if (!email || !password) {
+            showError("Please enter both email and password.");
             return;
         }
 
-        if (authStatus) authStatus.textContent = `Sending reset email to ${email}...`;
-        
+        // UI Loading State
+        actionBtn.disabled = true;
+        actionBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+        errorBox.style.display = 'none';
+
         try {
-            const result = await sendPasswordReset(email);
-            if (authStatus) authStatus.textContent = result.message;
+            if (isLogin) {
+                // --- LOGIN ---
+                await signInWithEmailAndPassword(auth, email, password);
+                // Redirect happens in onAuthStateChanged
+            } else {
+                // --- SIGN UP ---
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                // Create empty user profile
+                await setDoc(doc(db, 'users', userCredential.user.uid), {
+                    email: email,
+                    joined: new Date().toISOString(),
+                    temperatureUnit: 'F'
+                });
+            }
         } catch (error) {
-            if (authStatus) authStatus.textContent = `Reset Failed: ${error.message}`;
+            console.error("Auth Error:", error);
+            showError(getFriendlyErrorMessage(error.code));
+            actionBtn.disabled = false;
+            actionBtn.textContent = isLogin ? 'Sign In' : 'Sign Up';
         }
     });
-}
 
-function renderSignUpPage() {
-    if (!appContent) return; 
-
-    appContent.innerHTML = `
-        <div id="auth-screen" class="auth-wrapper">
-            <h1 class="auth-header">PlantPal</h1>
-            <div id="auth-status" class="auth-status">Create your account.</div>
-            
-            <div id="auth-forms" class="auth-form-container">
-                <h2>Sign Up</h2>
-                <input type="email" id="signup-email" placeholder="Email" class="auth-input">
-                <input type="password" id="signup-password" placeholder="Password" class="auth-input">
-                <button id="signup-button" class="auth-button primary-button">Sign Up</button>
-                
-                <hr class="auth-separator">
-
-                <button id="google-signin-button" class="auth-button google-button">Sign Up with Google</button>
-            </div>
-
-            <div class="auth-footer">
-                <p>Already have an account? <a href="#" id="goto-signin" class="auth-link">Sign In</a></p>
-            </div>
-        </div>
-    `;
-
-    // Attach listeners for sign up action
-    attachAuthListeners('signup');
-    if (bottomNav) bottomNav.style.display = 'none';
-
-    // Listener to switch back to the Sign In screen
-    document.getElementById('goto-signin')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        renderSignInPage();
-    });
-}
-
-
-// --- Event Listener Attachment (Auth Logic) ---
-
-function attachAuthListeners(mode) {
-    const authStatus = document.getElementById('auth-status');
-    // Ensure all DOM lookups use the optional chaining operator (?) for safety
-    const getVal = (id) => document.getElementById(id)?.value;
-    
-    // --- Determine Primary Action Button ---
-    if (mode === 'signin') {
-        const signinButton = document.getElementById('signin-button');
-        if (signinButton) {
-             signinButton.addEventListener('click', () => 
-                handleAuthAction(signIn, getVal('signin-email'), getVal('signin-password'))
-            );
-        }
-    } else if (mode === 'signup') {
-        const signupButton = document.getElementById('signup-button');
-        if (signupButton) {
-            signupButton.addEventListener('click', () => 
-                handleAuthAction(signUp, getVal('signup-email'), getVal('signup-password'))
-            );
-        }
-    }
-
-    // Google button handles BOTH sign in and sign up automatically via Firebase Auth
-    document.getElementById('google-signin-button')?.addEventListener('click', () => 
-        handleAuthAction(signInWithGoogle)
-    );
-
-    // Helper for Auth Action
-    const handleAuthAction = async (actionFn, ...args) => {
-        if (authStatus) authStatus.textContent = 'Processing...';
-        try {
-            await actionFn(...args);
-        } catch (error) {
-            // Error handling is now delegated to authService.js for user-friendly messages
-            if (authStatus) authStatus.textContent = `Error: ${error.message}`; 
-        }
-    };
-}
-
-
-// --------------------------------------------------
-// 3. AUTHENTICATED APP CONTROLLER
-// --------------------------------------------------
-
-async function renderAuthenticatedApp(user) {
-    try {
-        let userProfile = await getUserProfile(user.uid);
-        
-        if (!userProfile) {
-            userProfile = await createOrUpdateUserProfile(user);
-        }
-
-        startAppNavigation(userProfile, user);
-        
-    } catch (error) {
-        console.error('Failed to load user profile or start app:', error);
-        renderSignInPage();
+    function showError(msg) {
+        errorBox.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${msg}`;
+        errorBox.style.display = 'block';
     }
 }
 
-function startAppNavigation(userProfile, userAuth) {
-    if (bottomNav) { 
-        bottomNav.style.display = 'flex';
+// Helper: Convert Firebase Error Codes to Human Text
+function getFriendlyErrorMessage(errorCode) {
+    switch (errorCode) {
+        case 'auth/invalid-email': return 'Invalid email address format.';
+        case 'auth/user-disabled': return 'This account has been disabled.';
+        case 'auth/user-not-found': return 'No account found with this email.';
+        case 'auth/wrong-password': return 'Incorrect password.';
+        case 'auth/email-already-in-use': return 'This email is already in use.';
+        case 'auth/weak-password': return 'Password should be at least 6 characters.';
+        case 'auth/invalid-credential': return 'Invalid login credentials.';
+        default: return 'An unknown error occurred. Please try again.';
     }
-    
-    navigate(userProfile, userAuth);
-    window.addEventListener('hashchange', () => navigate(userProfile, userAuth));
 }
 
+// ----------------------------------------------------
+// APP INITIALIZATION
+// ----------------------------------------------------
 
-// --------------------------------------------------
-// 4. AUTH STATE CHANGE HANDLER (The Main Controller)
-// --------------------------------------------------
+const appContent = document.getElementById('app-content');
+const bottomNav = document.getElementById('bottom-nav');
 
-onAuthStateChanged(auth, (user) => {
+// Listen for Auth State Changes
+onAuthStateChanged(auth, async (user) => {
     if (user) {
-        renderAuthenticatedApp(user);
+        // User is signed in
+        bottomNav.style.display = 'flex';
+        
+        // Fetch User Profile
+        let userProfile = {};
+        try {
+            const docSnap = await getDoc(doc(db, 'users', user.uid));
+            if (docSnap.exists()) {
+                userProfile = docSnap.data();
+            }
+        } catch (e) {
+            console.error("Error fetching profile", e);
+        }
+
+        // REDIRECT LOGIC:
+        // If we are currently at the root (empty hash), go to home.
+        if (window.location.hash === '' || window.location.hash === '#') {
+             window.location.hash = '#home';
+        }
+        
+        // Start Navigation
+        navigate(userProfile, user);
+
+        // Listen for hash changes
+        window.onhashchange = () => navigate(userProfile, user);
+
     } else {
-        renderSignInPage();
+        // User is signed out
+        bottomNav.style.display = 'none';
+        renderAuth(appContent);
     }
 });

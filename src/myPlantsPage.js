@@ -1,74 +1,65 @@
 // src/myPlantsPage.js
 
 import { getMyPlants } from './plantService.js';
+import { renderMyPlantDetailView } from './myPlantDetailView.js';
 
 export async function renderMyPlantsPage(container, profile, authUser) {
-    container.innerHTML = '<div style="padding: 20px;"><h1>My Plants</h1><p>Loading...</p></div>';
+    container.innerHTML = '<div style="padding: 20px;"><h1 style="margin-bottom:20px;">My Plants</h1><p class="loading-text">Loading...</p></div>';
     
     try {
         const plants = await getMyPlants(authUser.uid);
         
         if (plants.length === 0) {
             container.innerHTML = `
-                <div class="empty-state" style="text-align: center; padding: 40px;">
-                    <h1>No Plants Yet!</h1>
-                    <p style="color: #aaa; margin-bottom: 20px;">Start building your collection.</p>
-                    <a href="#search" class="upload-pic-button" style="text-decoration: none; padding: 10px 20px;">Find Plants</a>
+                <div class="account-page-wrapper">
+                    <h1 style="margin-bottom:20px;">My Plants</h1>
+                    <div class="empty-state-card">
+                        <i class="fa-brands fa-pagelines"></i>
+                        <h3>Your collection is empty</h3>
+                        <p>Start your indoor jungle today.</p>
+                        <a href="#search" class="primary-button" style="text-decoration:none; font-size: 0.9em;">Add Plant</a>
+                    </div>
+                    <a href="#search" class="floating-add-btn"><i class="fa-solid fa-plus"></i></a>
                 </div>
             `;
             return;
         }
 
-        // Group plants by roomLocation
-        const groupedPlants = plants.reduce((groups, plant) => {
-            const location = plant.roomLocation || 'Unsorted';
-            if (!groups[location]) groups[location] = [];
-            groups[location].push(plant);
-            return groups;
-        }, {});
+        // 🏆 NEW: Simple Image Gallery
+        let html = `
+            <div class="my-plants-wrapper" style="padding: 20px; padding-bottom: 100px;">
+                <h1 style="margin-bottom: 20px;">My Plants</h1>
+                <div class="my-plant-gallery-grid">
+        `;
 
-        container.innerHTML = generateGalleryHTML(groupedPlants);
-
-    } catch (error) {
-        container.innerHTML = `<h1 style="color: #f44336; padding: 20px;">Error: ${error.message}</h1>`;
-        console.error(error);
-    }
-}
-
-function generateGalleryHTML(groupedPlants) {
-    let html = `
-        <div class="my-plants-wrapper" style="padding: 20px; padding-bottom: 100px;">
-        <header>
-            <h1>My Plants</h1>
-        </header>
-        <div class="plant-gallery">
-    `;
-
-    for (const location in groupedPlants) {
-        html += `<h2 class="location-header" style="margin-top: 20px; font-size: 1.2em; color: #41b883;">${location}</h2>`;
-        html += `<div class="plant-grid-layout">`; // Reuse grid from search page
-        
-        groupedPlants[location].forEach(plant => {
-            const plantName = plant.customName || plant.common_name || 'Unknown Plant';
-            const imageUrl = plant.profilePicURL || plant.image_url || 'https://via.placeholder.com/150/41b883/FFFFFF?text=P'; 
+        plants.forEach(plant => {
+            const imageUrl = plant.profilePicURL || 'https://via.placeholder.com/300/41b883/FFFFFF?text=P';
             
+            // Clean Card (Image Only)
             html += `
-                <div class="plant-card">
-                    <div class="card-image" style="background-image: url('${imageUrl}')"></div>
-                    <div class="card-info">
-                        <h3>${plantName}</h3>
-                    </div>
+                <div class="gallery-card" data-id="${plant.id}">
+                    <div class="gallery-image" style="background-image: url('${imageUrl}')"></div>
                 </div>
             `;
         });
-        html += `</div>`; 
-    }
 
-    html += `
-        <a href="#search" class="floating-add-btn">
-            <i class="fa-solid fa-plus"></i>
-        </a>
-    </div></div>`; 
-    
-    return html;
+        html += `</div>
+            <a href="#search" class="floating-add-btn"><i class="fa-solid fa-plus"></i></a>
+        </div>`;
+
+        container.innerHTML = html;
+
+        // Click Listeners
+        container.querySelectorAll('.gallery-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const plantId = card.dataset.id;
+                const selectedPlant = plants.find(p => p.id === plantId);
+                renderMyPlantDetailView(container, selectedPlant, profile, authUser);
+            });
+        });
+
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = `<h1 style="color: #f44336; padding: 20px;">Error loading plants.</h1>`;
+    }
 }

@@ -32,7 +32,7 @@ export const analytics = getAnalytics(app);
 // This critical block ensures all SDKs point to the local ports.
 if (import.meta.env.DEV) { 
   const AUTH_PORT = 9102;      
-  const FIRESTORE_PORT = 8082; 
+  const FIRESTORE_PORT = 8085; 
   const STORAGE_PORT = 9199;   
 
   // Connect Auth to local emulator

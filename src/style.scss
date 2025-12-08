@@ -8,39 +8,42 @@
 $font-header: 'Outfit', sans-serif;
 $font-body: 'Roboto', sans-serif;
 
-// Define variables for your Dark Theme & Accents
-$color-green-accent: #41b883; 
-$color-dark-bg: #242424;     
-$color-content-bg: #2a2a2a;  
-$color-text-light: rgba(255, 255, 255, 0.87); 
+// Theme Palette
+$color-green-accent: #def39b; // Lime/Moss
+$color-dark-bg: #194538;      // Deep Jungle Green
+$color-content-bg: #163c31;   // Slate Green
+$color-text-light: rgba(255, 255, 255, 0.9); 
 $color-error: #f44336;       
 
 // ----------------------------------------------------
-// 2. GLOBAL BASE STYLES (Apply Fonts Site-Wide)
+// 2. GLOBAL BASE STYLES
 // ----------------------------------------------------
 
 body {
-    // Apply Roboto to all base text
     font-family: $font-body;
     background-color: $color-dark-bg;
     color: $color-text-light;
     margin: 0;
+    -webkit-font-smoothing: antialiased;
 }
 
-// Apply bold Outfit font to all main headers
 h1, h2, h3 {
     font-family: $font-header;
     font-weight: 700; 
+    margin-top: 0;
 }
 p, span, label {
     font-family: $font-body;
 }
 
-// Global Link & Anchor Styles
 a {
     font-weight: 500;
     color: $color-green-accent;
     text-decoration: inherit;
+
+    &:hover {
+        color: lighten($color-green-accent, 10%); 
+    }
 }
 
 // Global Button Base
@@ -51,31 +54,37 @@ button {
     padding: 0.6em 1.2em;
     font-size: 1em;
     cursor: pointer;
-    transition: border-color 0.25s, background-color 0.25s;
-    margin: 5px;
+    transition: border-color 0.25s, background-color 0.25s, transform 0.1s;
+    
+    // REMOVED SHADOWS
+    box-shadow: none !important; 
     
     &:hover {
         border-color: #ffffff;
     }
+    &:active {
+        transform: scale(0.98);
+    }
 }
 
-// ⬅️ NEW: Default Primary Green Button Style (Targets the .primary-button class in your HTML)
 .primary-button {
     background-color: $color-green-accent; 
-    color: $color-dark-bg;
+    color: $color-dark-bg; 
+    font-weight: 700;
 }
 
-// Global Input Base
+// Default Inputs
 input[type="email"], 
 input[type="password"],
 .location-input-field { 
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     box-sizing: border-box;
-    background-color: #333; 
-    border: 1px solid #555;
+    background-color: $color-dark-bg; 
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: $color-text-light;
-    border-radius: 4px;
+    border-radius: 12px;
+    font-size: 1rem;
 
     &:focus {
       border-color: $color-green-accent; 
@@ -83,351 +92,524 @@ input[type="password"],
     }
 }
 
-
 // ----------------------------------------------------
 // 3. NAVIGATION STYLES
 // ----------------------------------------------------
 
 #bottom-nav {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 60px; 
+    bottom: 0; left: 0; width: 100%; height: 60px; 
     background-color: $color-content-bg; 
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.4);
+    border-top: 1px solid rgba(255,255,255,0.05); // Subtle border instead of shadow
     z-index: 100;
-    
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    
+    display: flex; justify-content: space-around; align-items: center;
     padding-bottom: env(safe-area-inset-bottom, 10px); 
     
     a.nav-link {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        color: $color-text-light;
-        opacity: 0.6;
-        text-decoration: none;
-        
-        i {
-            font-size: 1.5em; 
-            margin-bottom: 3px;
-        }
-
-        &.active {
-            color: $color-green-accent; 
-            opacity: 1;
-        }
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        width: 100%; color: $color-text-light; opacity: 0.6; text-decoration: none;
+        i { font-size: 1.5em; margin-bottom: 3px; }
+        &.active { color: $color-green-accent; opacity: 1; }
     }
 }
 
 // ----------------------------------------------------
-// 4. AUTHENTICATION PAGE STYLES
+// 4. FLOATING ACTION BUTTON (FAB)
+// ----------------------------------------------------
+.floating-add-btn {
+    position: fixed; bottom: 80px; right: 20px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background-color: $color-green-accent;
+    color: $color-dark-bg;
+    border: none;
+    // REMOVED SHADOW
+    display: flex; align-items: center; justify-content: center;
+    text-decoration: none; z-index: 90; 
+    transition: transform 0.2s, background-color 0.2s;
+    font-size: 1.5em;
+
+    &:hover {
+        background-color: lighten($color-green-accent, 10%);
+        transform: scale(1.05);
+    }
+}
+
+// ----------------------------------------------------
+// 5. AUTHENTICATION PAGE STYLES
 // ----------------------------------------------------
 
 .auth-wrapper {
-    max-width: 400px; 
-    margin: 40px auto; 
-    padding: 20px;
-    text-align: center;
-    box-sizing: border-box; 
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    max-width: 400px; margin: 0 auto; padding: 20px;
+    text-align: center; min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
 
-    .auth-header {
-        color: $color-green-accent;
-        margin-bottom: 20px;
-    }
-
-    .auth-status {
-        margin-bottom: 20px;
-        font-weight: 500;
-    }
+    .auth-header { color: $color-green-accent; margin-bottom: 10px; font-size: 2.5rem; }
+    .auth-status { margin-bottom: 30px; font-weight: 500; color: rgba(255,255,255,0.7); }
 }
 
 .auth-form-container {
-    padding: 20px;
+    padding: 30px 20px;
     background-color: $color-content-bg; 
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    // REMOVED SHADOW
     
-    h2 {
-        margin-top: 0;
-        font-size: 1.8em;
+    h2 { margin-bottom: 20px; }
+    .auth-input { margin-bottom: 15px; }
+    
+    .forgot-password-container {
+        text-align: right; margin-top: -10px; margin-bottom: 20px;
+        .auth-link { font-family: $font-header; font-size: 0.9em; color: rgba(255,255,255,0.6); }
     }
-    
-    .auth-input {
-        width: 100%;
-        margin-bottom: 15px;
-    }
-    
+
     .auth-button {
-        width: 100%;
-        margin: 10px 0;
-        font-size: 1.1em;
-        font-weight: 700;
-        
+        width: 100%; margin: 10px 0; padding: 12px; font-size: 1.1em;
         &.google-button {
-            background-color: #333; 
+            background-color: $color-dark-bg; 
             color: $color-text-light;
-            border: 1px solid #555;
+            border: 1px solid rgba(255,255,255,0.2);
         }
     }
 }
 
-.auth-separator {
-    border-color: #444;
-    margin: 25px 0;
+.auth-separator { border-color: rgba(255,255,255,0.1); margin: 25px 0; }
+.auth-footer { margin-top: 30px; font-size: 0.9em; }
+
+// ----------------------------------------------------
+// 6. SEARCH PAGE & LIST STYLES
+// ----------------------------------------------------
+
+.search-page-wrapper {
+    padding: 20px; padding-bottom: 100px;
+    max-width: 600px; margin: 0 auto; 
 }
 
-.auth-footer {
-    margin-top: 25px;
-    font-size: 0.9em;
+.search-header { margin-bottom: 20px; }
+
+// ⬅️ UPDATED: Search Bar Outline Style
+.search-bar-container {
+    position: relative; margin-bottom: 15px; width: 100%;
     
-    .auth-link {
-        font-weight: 700;
-        text-decoration: none;
+    .search-icon {
+        position: absolute; left: 15px; top: 50%;
+        transform: translateY(-50%);
+        color: $color-green-accent; // Icon Color
+    }
+    
+    input {
+        width: 100%; padding: 12px 12px 12px 45px; 
+        border-radius: 12px;
+        background-color: transparent; // Transparent BG
+        border: 2px solid $color-green-accent; // Accent Border
+        color: $color-green-accent; // Text Color
+        font-size: 1rem;
+        box-sizing: border-box;
+        
+        &::placeholder {
+            color: rgba(222, 243, 155, 0.6); // Subtle accent color for placeholder
+        }
+        
+        &:focus {
+            outline: none;
+            background-color: rgba(222, 243, 155, 0.05); // Slight tint on focus
+        }
+    }
+}
+
+.filters-scroll {
+    display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;
+    scrollbar-width: none; 
+    &::-webkit-scrollbar { display: none; }
+    
+    .filter-chip {
+        flex: 0 0 auto; 
+        background-color: $color-content-bg;
+        color: $color-text-light;
+        border: 1px solid rgba(255,255,255,0.1); // Subtle border
+        border-radius: 20px; padding: 8px 16px; font-size: 0.9rem;
+        display: flex; align-items: center; gap: 6px;
+        
+        i { color: $color-green-accent; }
+        
+        &.active {
+            background-color: $color-green-accent;
+            color: $color-dark-bg;
+            border-color: $color-green-accent;
+            i { color: $color-dark-bg; }
+        }
+    }
+}
+
+.plant-list-layout {
+    display: flex; flex-direction: column; gap: 12px; margin-top: 10px;
+}
+
+.plant-list-item {
+    display: flex; align-items: center;
+    background-color: $color-content-bg;
+    padding: 10px 15px; border-radius: 16px; 
+    // REMOVED SHADOW
+    transition: transform 0.2s, background-color 0.2s;
+    cursor: pointer; text-decoration: none; color: inherit;
+
+    &:hover {
+        transform: scale(1.01);
+        background-color: lighten($color-content-bg, 5%);
+    }
+
+    .list-image {
+        width: 50px; height: 50px; border-radius: 50%;
+        background-size: cover; background-position: center;
+        border: 2px solid $color-green-accent;
+        flex-shrink: 0; margin-right: 15px;
+    }
+
+    .list-info {
+        flex-grow: 1; overflow: hidden;
+        .list-name { font-size: 1rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .list-scientific { font-size: 0.8rem; margin: 0; font-style: italic; color: rgba(255, 255, 255, 0.6); }
+    }
+
+    .list-meta {
+        display: flex; align-items: center; gap: 15px; margin-left: 10px;
+        .meta-icons {
+            display: flex; gap: 8px; font-size: 0.9em; color: $color-green-accent;
+            @media (max-width: 350px) { display: none; }
+        }
+        .list-arrow { color: rgba(255, 255, 255, 0.4); }
     }
 }
 
 // ----------------------------------------------------
-// 5. ACCOUNT PAGE COMPONENT STYLES
+// 7. ACCOUNT PAGE STYLES
 // ----------------------------------------------------
 
 .account-page-wrapper {
-    padding-bottom: 80px; 
-    padding-top: 20px;
+    padding: 20px; padding-bottom: 100px;
+    max-width: 600px; margin: 0 auto;
 }
-
-.account-header {
-    text-align: center;
-    padding: 20px 0;
-}
-
+.account-header { text-align: center; padding: 20px 0; }
 .settings-list {
-    max-width: 400px;
-    margin: 0 auto;
     text-align: left;
-    
-    hr {
-        border-color: #555;
-        margin: 10px 0;
-    }
-    
-    h3 {
-        margin-top: 30px;
-    }
+    hr { border-color: rgba(255,255,255,0.1); margin: 10px 0; }
+    h3 { margin-top: 30px; color: $color-green-accent; }
 }
-
-// Individual Setting Rows
-.setting-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-
-    &-stack {
-        padding: 10px 0;
-    }
-}
-
-.setting-label {
-    font-family: $font-body;
-    font-weight: 500;
-}
-
-// ----------------------
-// AVATAR & UPLOAD STYLES
-// ----------------------
+.setting-item, .setting-item-stack { padding: 10px 0; }
+.setting-item { display: flex; justify-content: space-between; align-items: center; }
 
 .profile-avatar-container {
-    position: relative; 
-    width: 200px;
-    height: 200px;
-    border-radius: 50%; 
-    margin: 0 auto 10px; 
-    overflow: hidden;
-    background-color: #333;
-    border: 3px solid $color-green-accent; 
-    cursor: pointer; 
-    
-    &:hover .profile-edit-overlay {
-        opacity: 1;
-    }
+    position: relative; width: 100px; height: 100px;
+    border-radius: 50%; margin: 0 auto 15px; overflow: hidden;
+    background-color: $color-dark-bg; border: 3px solid $color-green-accent; 
+    cursor: pointer;
+    &:hover .profile-edit-overlay { opacity: 1; }
 }
-
-.profile-avatar-img { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
-}
-
+.profile-avatar-img { width: 100%; height: 100%; object-fit: cover; }
 .profile-avatar-initials {
-    width: 100%;
-    height: 100%; 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-    color: $color-text-light;
-    background-color: #555;
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 40px; color: $color-text-light; background-color: rgba(255,255,255,0.1);
     font-family: $font-header; 
 }
-
 .profile-edit-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6); 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0; 
-    transition: opacity 0.25s ease-in-out;
-    
-    i {
-        color: $color-text-light;
-        font-size: 24px; 
-    }
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s;
+    i { color: $color-text-light; font-size: 24px; }
 }
-
-.upload-status, .location-status {
-    font-size: 0.8em;
-    color: $color-green-accent;
-    margin-top: 5px;
-}
-
-// ----------------------
-// LOCATION INPUT & BUTTON STYLES
-// ----------------------
 
 .location-input-group {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 5px;
-    
-    .location-input-field {
-        width: 60%;
-        padding: 8px;
-        margin-right: 5px;
-    }
-    
-    .location-buttons {
-        display: flex; 
-        align-items: center;
-        justify-content: flex-end; 
-        width: 40%;
-    }
-    
+    display: flex; align-items: center; justify-content: space-between; margin-top: 10px;
+    .location-input-field { width: 60%; padding: 10px; }
+    .location-buttons { display: flex; width: 38%; gap: 8px; }
     .location-arrow-button { 
-        width: 35px; 
-        height: 35px; 
-        margin: 0 5px 0 0; 
-        font-size: 1.2em; 
-        border-radius: 8px; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center;
-        background-color: #333;
-        
-        i {
-            color: $color-green-accent;
-        }
+        width: 45px; height: 45px; margin: 0; font-size: 1.2em; 
+        background-color: $color-dark-bg; color: $color-green-accent;
+        display: flex; align-items: center; justify-content: center;
+        border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
     }
-    
-    .location-save-button { 
-        flex-grow: 1;
-        height: 35px;
-        display: flex;
-        align-items: center;
-        justify-content: space-evenly;
-        background-color: $color-green-accent;
-        color: $color-text-light;
-    }
+    .location-save-button { flex-grow: 1; height: 45px; margin: 0; }
+}
+.upload-status, .location-status {
+    font-size: 0.8em; color: $color-green-accent; margin-top: 8px; text-align: right;
 }
 
-// ----------------------
-// TOGGLE SWITCH STYLES
-// ----------------------
-
-/* Base Switch Structure (Dark Mode Toggle) */
+// Toggles
 .switch {
-    position: relative;
-    display: inline-block;
-    width: 40px;
-    height: 24px;
-    
+    position: relative; display: inline-block; width: 40px; height: 24px;
     input { opacity: 0; width: 0; height: 0; }
-    
     .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #555;
-        transition: .4s;
-        border-radius: 24px;
-        
+        position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; 
+        background-color: rgba(255,255,255,0.2); transition: .4s; border-radius: 24px;
         &::before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
+            position: absolute; content: ""; height: 16px; width: 16px; 
+            left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
         }
     }
-    
     input:checked + .slider { background-color: $color-green-accent; }
     input:checked + .slider::before { transform: translateX(16px); }
 }
-
-/* Radio Toggle Switch (Temp Unit) */
 .toggle-switch {
-    display: flex;
-    border: 1px solid #555;
-    border-radius: 20px;
-    overflow: hidden;
-    
-    .temp-label {
-        padding: 5px 10px;
-        cursor: pointer;
-        transition: background-color 0.2s, color 0.2s;
-    }
-
-    input[type="radio"]:checked + .temp-label {
-        background-color: $color-green-accent;
-        color: $color-dark-bg;
-        border-color: $color-green-accent;
-    }
-    
-    input[type="radio"] {
-        display: none;
+    display: flex; border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; overflow: hidden;
+    .temp-label { padding: 5px 15px; cursor: pointer; transition: background-color 0.2s; }
+    input[type="radio"]:checked + .temp-label { background-color: $color-green-accent; color: $color-dark-bg; }
+    input[type="radio"] { display: none; }
+}
+.signout-container {
+    margin-top: 40px;
+    .signout-button {
+        border: 2px solid $color-error; background-color: transparent;
+        color: $color-error; width: 100%;
+        &:hover { background-color: rgba(244, 67, 54, 0.1); }
     }
 }
 
-.signout-container {
-    margin-top: 30px;
-    .signout-button {
-        border: 2px solid $color-error;
-        background-color: transparent;
-        color: $color-error;
-        width: 100%;
-        font-family: $font-header;
+// ----------------------------------------------------
+// 8. PLANT DETAIL PAGE STYLES
+// ----------------------------------------------------
+
+.plant-detail-wrapper {
+    padding-bottom: 100px; max-width: 600px; margin: 0 auto;
+}
+.detail-header-image {
+    width: 100%; height: 300px; background-size: cover; background-position: center;
+    position: relative; border-radius: 0 0 24px 24px;
+    // REMOVED SHADOW
+}
+.nav-back-btn {
+    position: absolute; top: 20px; left: 20px; width: 45px; height: 45px;
+    border-radius: 50%; background-color: rgba(0, 0, 0, 0.5); color: white; border: none;
+    display: flex; align-items: center; justify-content: center; font-size: 1.2em;
+    backdrop-filter: blur(4px); padding: 0;
+    &:hover { background-color: rgba(0, 0, 0, 0.7); }
+}
+.detail-content { padding: 25px; }
+.detail-title-section {
+    h1 { margin: 0 0 5px 0; font-size: 2em; line-height: 1.1; }
+    .scientific-name { font-style: italic; color: $color-green-accent; margin: 0 0 15px 0; }
+}
+.tags-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.tag-chip {
+    padding: 6px 12px; border-radius: 20px; background-color: $color-dark-bg; font-size: 0.85em;
+    display: flex; align-items: center; gap: 6px;
+    &.safe { background-color: rgba(222, 243, 155, 0.15); color: $color-green-accent; }
+    &.warning { background-color: rgba(244, 67, 54, 0.15); color: $color-error; }
+}
+.stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;
+}
+.stat-item {
+    background-color: $color-content-bg; padding: 20px; border-radius: 16px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    .stat-icon { font-size: 1.8em; color: $color-green-accent; margin-bottom: 10px; }
+    .stat-label { font-size: 0.75em; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-value { font-weight: 700; font-size: 1.1em; margin-top: 4px; }
+}
+.detail-description {
+    h3 { color: $color-green-accent; margin-bottom: 10px; }
+    p { line-height: 1.6; color: rgba(255, 255, 255, 0.8); }
+}
+
+// ----------------------------------------------------
+// 9. NEW QUIZ STYLES (Inverted Radius / Scoop)
+// ----------------------------------------------------
+
+.quiz-start-card {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    border-radius: 24px;
+    // The main image
+    background-image: url('https://images.unsplash.com/photo-1545241047-6083a3684587?q=80&w=1000&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    overflow: hidden; // Keep content inside rounded corners
+    animation: fadeIn 0.5s ease-out;
+    
+    // Dark overlay for text readability
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.2));
+        z-index: 1;
     }
+    
+    // IMPORTANT: Allow the button container to sit on top
+    z-index: 0;
+}
+
+// Text Container
+.quiz-start-content {
+    position: relative;
+    z-index: 2;
+    padding: 40px;
+    max-width: 70%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-sizing: border-box;
+
+    h2 { 
+        color: white; 
+        font-size: 2.2rem; 
+        margin-bottom: 15px; 
+        line-height: 1.1;
+    }
+    
+    p { 
+        color: rgba(255, 255, 255, 0.9); 
+        font-size: 1.1rem; 
+        margin: 0; 
+    }
+}
+
+// ⬅️ THE BUTTON CONTAINER (The "Scoop")
+.quiz-btn-container {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    z-index: 10;
+    width: 80px;  // Button size (60) + Padding (20)
+    height: 80px;
+    background-color: $color-dark-bg; // Matches Page BG to create "cutout" look
+    border-top-left-radius: 50%; // Main curve
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    // SMOOTHING CORNER 1 (Top)
+    &::before {
+        content: '';
+        position: absolute;
+        top: -20px; // Move up
+        right: 0;
+        width: 20px;
+        height: 20px;
+        // This shadow creates the inverse curve filling the gap
+        background: transparent;
+        border-bottom-right-radius: 50%;
+        box-shadow: 10px 10px 0 $color-dark-bg; 
+    }
+    
+    // SMOOTHING CORNER 2 (Left)
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: -20px; // Move left
+        width: 20px;
+        height: 20px;
+        background: transparent;
+        border-bottom-right-radius: 50%;
+        box-shadow: 10px 10px 0 $color-dark-bg;
+    }
+}
+
+// The Actual Button
+.start-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: $color-green-accent;
+    color: $color-dark-bg;
+    border: none;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    
+    &:hover {
+        transform: scale(1.1) rotate(-45deg); // Fun interaction
+        background-color: white;
+    }
+}
+
+// ... (Quiz Step Styles remain the same) ...
+
+.quiz-step-card {
+    background-color: $color-content-bg;
+    padding: 30px 25px; 
+    border-radius: 24px; 
+    text-align: center;
+    animation: fadeIn 0.4s ease-out;
+    min-height: 300px;
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center;
+}
+
+.quiz-header-row { margin-bottom: 20px; h3 { font-size: 1.4rem; color: $color-text-light; } }
+.quiz-icon { font-size: 2.5em; color: $color-green-accent; margin-bottom: 15px; }
+
+.quiz-options {
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px;
+    
+    .quiz-btn {
+        background-color: $color-dark-bg;
+        border: 2px solid transparent; 
+        color: $color-text-light;
+        padding: 15px; 
+        border-radius: 12px; 
+        font-size: 1rem;
+        transition: all 0.2s; 
+        font-weight: 500;
+        
+        &:hover { 
+            border-color: $color-green-accent; 
+            background-color: lighten($color-dark-bg, 5%); 
+        }
+        
+        &:active { transform: scale(0.98); }
+    }
+}
+
+.quiz-progress {
+    margin-top: 25px; 
+    color: #888; 
+    font-size: 0.9em; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+}
+
+.primary-button.outline {
+    background-color: transparent; 
+    border: 2px solid $color-green-accent; 
+    color: $color-green-accent;
+    &:hover { background-color: $color-green-accent; color: $color-dark-bg; }
+}
+
+// ----------------------------------------------------
+// 11. UTILITIES
+// ----------------------------------------------------
+.loading-text, .no-results, .error-text { text-align: center; padding: 30px; color: #888; }
+.firebase-emulator-warning { display: none !important; }
+
+.secondary-text-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5); // Subtle grey
+    font-size: 0.9rem;
+    width: 100%;
+    margin-top: 10px;
+    padding: 15px;
+    cursor: pointer;
+    transition: color 0.2s;
+    font-family: $font-header;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    &:hover {
+        color: $color-green-accent; // Light up on hover
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

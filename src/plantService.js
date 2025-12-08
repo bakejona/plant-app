@@ -4,20 +4,11 @@ import { db } from './firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 // ----------------------------------------------------
-// FIREBASE FIRESTORE FUNCTIONS (EXISTING)
+// FIREBASE FIRESTORE FUNCTIONS
 // ----------------------------------------------------
 
-/**
- * Fetches all plants belonging to the authenticated user.
- * @param {string} uid - The authenticated user's ID.
- * @returns {Promise<Array<object>>} Array of plant documents.
- */
 export async function getMyPlants(uid) {
-    // Reference the 'plants' subcollection under the specific user's document
     const plantsCollectionRef = collection(db, 'users', uid, 'plants');
-    // ... (rest of the function remains the same)
-    
-    // Assuming the full logic is here.
     const q = query(plantsCollectionRef);
 
     try {
@@ -29,7 +20,6 @@ export async function getMyPlants(uid) {
                 ...doc.data() 
             });
         });
-        console.log(`Found ${plants.length} plants for user ${uid}.`);
         return plants;
     } catch (error) {
         console.error('Error fetching plants:', error);
@@ -39,23 +29,28 @@ export async function getMyPlants(uid) {
 
 
 // ----------------------------------------------------
-// PERENUAL API FUNCTIONS (NEW)
+// PERENUAL API FUNCTIONS
 // ----------------------------------------------------
 
 const API_KEY = import.meta.env.VITE_PERENUAL_API_KEY;
 const BASE_URL = "https://perenual.com/api/v2";
 
 /**
- * Searches the Perenual API for plant species based on a query.
- * @param {string} queryString - The name or keyword to search for.
- * @returns {Promise<Array<object>>} Array of matching species results.
+ * Searches the Perenual API.
  */
-export async function searchPlantSpecies(queryString) {
-    if (!API_KEY || !queryString) {
-        return [];
-    }
+export async function searchPlantSpecies(queryString, filters = {}) {
+    if (!API_KEY) return [];
 
-    const url = `${BASE_URL}/species-list?key=${API_KEY}&q=${queryString}`;
+    // Enforce Indoor & Maximize Results (up to 100 per page)
+    let url = `${BASE_URL}/species-list?key=${API_KEY}&page=1&indoor=1&per_page=100`;
+
+    if (queryString) url += `&q=${encodeURIComponent(queryString)}`;
+
+    // Filters
+    if (filters.maintenance) url += `&maintenance=${filters.maintenance}`; 
+    if (filters.sunlight) url += `&sunlight=${filters.sunlight}`;
+    if (filters.watering) url += `&watering=${filters.watering}`;
+    if (filters.poisonous !== undefined) url += `&poisonous=${filters.poisonous}`;
 
     try {
         const response = await fetch(url);
@@ -63,11 +58,77 @@ export async function searchPlantSpecies(queryString) {
             throw new Error(`Perenual API failed: ${response.statusText}`);
         }
         const data = await response.json();
-        
-        // Return the actual data array from the API response
-        return data.data || []; 
+        let results = data.data || [];
+
+        // 1. CLEANUP: Filter valid plants with images
+        results = results.filter(plant => 
+            plant.default_image && 
+            plant.default_image.thumbnail && 
+            !plant.default_image.thumbnail.includes("upgrade_access")
+        );
+
+        // 2. FORMAT NAMES: Capitalize & Remove Hyphens
+        results = results.map(plant => ({
+            ...plant,
+            common_name: formatPlantName(plant.common_name)
+        }));
+
+        // 3. SORT: Alphabetical
+        return results.sort((a, b) => a.common_name.localeCompare(b.common_name));
+
     } catch (error) {
         console.error('Error searching plant species:', error);
         throw error;
     }
+}
+
+/**
+ * Fetches detailed information for a specific plant by ID.
+ */
+export async function getPlantDetails(plantId) {
+    if (!API_KEY || !plantId) throw new Error("Invalid API Key or Plant ID");
+
+    const url = `${BASE_URL}/species/details/${plantId}?key=${API_KEY}`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            if (response.status === 429) throw new Error("API Limit Reached.");
+            throw new Error(`Details fetch failed: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+
+        // Format the name in the details view too!
+        data.common_name = formatPlantName(data.common_name);
+
+        return data; 
+
+    } catch (error) {
+        console.error('Error fetching plant details:', error);
+        throw error;
+    }
+}
+
+/**
+ * Fetches "Trending" plants (Default List)
+ */
+export async function fetchTrendingPlants() {
+    return await searchPlantSpecies(''); 
+}
+
+// ----------------------------------------------------
+// HELPER: NAME FORMATTER
+// ----------------------------------------------------
+function formatPlantName(name) {
+    if (!name) return "Unknown Plant";
+    
+    return name
+        // 1. Replace hyphens with spaces
+        .replace(/-/g, ' ') 
+        // 2. Replace multiple spaces with single space
+        .replace(/\s+/g, ' ')
+        // 3. Capitalize the First Letter of Each Word
+        .toLowerCase()
+        .replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
 }

@@ -19,3 +19,6 @@ PlantPal is a smart plant care companion application designed to help users disc
 - **APIs:**
   - [Perenual API](https://perenual.com/) (Plant Data)
   - [WeatherAPI](https://www.weatherapi.com/) (Real-time Weather)
+
+  ## 🌎 Global Link
+  https://fir-setup-f2b47.web.app/#account

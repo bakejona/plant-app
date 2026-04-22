@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Vite Dev Server",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "Firebase Emulators",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["exec", "firebase", "--", "emulators:start"],
+      "port": 5003
+    },
+    {
+      "name": "Serve (Production Preview)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start"],
+      "port": 8080
+    }
+  ]
+}

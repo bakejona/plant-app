@@ -20,12 +20,18 @@ $color-error: #f44336;
 // 2. GLOBAL BASE STYLES
 // ----------------------------------------------------
 
+html {
+    height: 100%;
+}
+
 body {
     font-family: $font-body;
     background-color: $color-dark-bg;
     color: $color-text-light;
     margin: 0;
     -webkit-font-smoothing: antialiased;
+    height: 100%;
+    overscroll-behavior: none;
 }
 
 h1, h2, h3 {
@@ -99,12 +105,16 @@ input[type="password"],
 
 #bottom-nav {
     position: fixed;
-    bottom: 0; left: 0; width: 100%; height: 60px; 
-    background-color: $color-content-bg; 
-    border-top: 1px solid rgba(255,255,255,0.05); // Subtle border instead of shadow
+    bottom: 0; left: 0; width: 100%; height: 60px;
+    background-color: $color-content-bg;
+    border-top: 1px solid rgba(255,255,255,0.05);
     z-index: 100;
     display: flex; justify-content: space-around; align-items: center;
-    padding-bottom: env(safe-area-inset-bottom, 10px); 
+    padding-bottom: env(safe-area-inset-bottom, 10px);
+    // Force GPU compositing layer so the nav never scrolls on mobile browsers
+    transform: translateZ(0);
+    will-change: transform;
+    -webkit-transform: translateZ(0);
     
     a.nav-link {
         display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -828,6 +838,96 @@ input[type="password"],
     margin-top: 4px;
     padding: 14px;
     font-size: 1rem;
+}
+
+// ── Profile setup form ────────────────────────────────────────────────────────
+.setup-avatar-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.setup-avatar-preview {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: $color-card-highlight;
+    border: 2px solid rgba(168, 224, 99, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: rgba(255,255,255,0.3);
+    transition: border-color 0.2s;
+    overflow: hidden;
+    &:hover { border-color: $color-green-accent; }
+}
+
+.setup-avatar-label {
+    font-size: 0.8rem;
+    color: $color-green-accent;
+    font-weight: 600;
+}
+
+.setup-field-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    margin-top: 4px;
+}
+
+.setup-loc-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    input { margin-bottom: 0; }
+}
+
+.setup-gps-btn {
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: $color-card-highlight;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: $color-green-accent;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    &:hover { border-color: $color-green-accent; }
+}
+
+.setup-temp-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.setup-temp-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 12px;
+    background: $color-card-highlight;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    &--active {
+        background: rgba(168, 224, 99, 0.15);
+        border-color: $color-green-accent;
+        color: $color-green-accent;
+    }
 }
 
 .auth-footer {
@@ -2259,6 +2359,10 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
     top: 16px;
     right: 16px;
     z-index: 1000;
+    // On wider viewports, keep button inside the 600px content column
+    @media (min-width: 632px) {
+        right: calc((100vw - 600px) / 2 + 16px);
+    }
 }
 
 .pmenu-root {
@@ -3364,6 +3468,11 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
 // ----------------------------------------------------
 // 14. MY PLANTS GALLERY
 // ----------------------------------------------------
+
+.my-plants-wrapper {
+    max-width: 600px;
+    margin: 0 auto;
+}
 
 .my-plant-gallery-grid {
     display: grid;

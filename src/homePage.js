@@ -261,10 +261,32 @@ export async function renderHomePage(container, profile, weatherData, authUser) 
         `</div>`;
     }
 
+    // ── Build hero photo pool (before render so we know whether to show hero) ──
+    let heroPhotos = [];
+    if (authUser) {
+        try {
+            heroPhotos = await getGalleryPhotos(authUser.uid);
+        } catch (e) { console.error(e); }
+
+        // Fallback: use existing plant profilePicURLs
+        if (heroPhotos.length === 0) {
+            heroPhotos = plants
+                .filter(p => p.profilePicURL)
+                .map(p => ({
+                    plantId:   p.id,
+                    plantName: p.customName || p.common_name || 'My Plant',
+                    photoURL:  p.profilePicURL,
+                    timestamp: p.dateAdded || new Date().toISOString(),
+                }));
+        }
+    }
+
+    const showHero = heroPhotos.length > 0;
+
     // ── Render shell ──────────────────────────────────────────────────────────
     container.innerHTML = `
         <div class="home-wrapper">
-            <div id="home-hero" class="home-hero"></div>
+            ${showHero ? `<div id="home-hero" class="home-hero"></div>` : ''}
 
             <div class="home-tasks-wrap">
                 <div class="home-section-title">
@@ -279,26 +301,6 @@ export async function renderHomePage(container, profile, weatherData, authUser) 
             </a>
         </div>
     `;
-
-    // ── Build hero photo pool ─────────────────────────────────────────────────
-    let heroPhotos = [];
-    if (authUser) {
-        try {
-            heroPhotos = await getGalleryPhotos(authUser.uid);
-        } catch (e) { console.error(e); }
-
-        // Fallback: use existing plant profilePicURLs not already in gallery
-        if (heroPhotos.length === 0) {
-            heroPhotos = plants
-                .filter(p => p.profilePicURL)
-                .map(p => ({
-                    plantId:   p.id,
-                    plantName: p.customName || p.common_name || 'My Plant',
-                    photoURL:  p.profilePicURL,
-                    timestamp: p.dateAdded || new Date().toISOString(),
-                }));
-        }
-    }
 
     // ── Init hero ─────────────────────────────────────────────────────────────
     const heroEl = container.querySelector('#home-hero');

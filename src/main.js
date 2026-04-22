@@ -12,6 +12,8 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { navigate } from './router.js';
 import { mountProfileMenu } from './profileMenu.js';
 import { signInWithGoogle, signInWithApple, sendPasswordReset } from './authService.js';
+import { updateUserProfile } from './userService.js';
+import { fetchWeather, getCurrentBrowserLocation } from './weatherService.js';
 import { logoSVG } from './logoSVG.js';
 import './style.scss';
 
@@ -382,6 +384,150 @@ function getFriendlyErrorMessage(errorCode) {
 }
 
 // ----------------------------------------------------
+// PROFILE SETUP (shown to new users after signup)
+// ----------------------------------------------------
+
+function renderProfileSetup(container, user, onComplete) {
+    let newPhotoURL = '';
+
+    container.innerHTML = `
+        <div class="auth-wrapper auth-slide-up">
+            <div class="auth-form-container">
+                <div class="auth-title-row">
+                    <div class="auth-title-icon-circle">
+                        <i class="fa-solid fa-leaf"></i>
+                    </div>
+                    <h2 class="auth-title-left">Set Up Your Profile</h2>
+                </div>
+                <p class="auth-subtext">Personalize PlantPal before you start.</p>
+
+                <div class="setup-avatar-row" id="setup-avatar-row">
+                    <div class="setup-avatar-preview" id="setup-avatar-preview">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <span class="setup-avatar-label">Add profile photo</span>
+                    <input type="file" id="setup-pic-input" accept="image/*" style="display:none">
+                </div>
+
+                <input type="text" id="setup-name" class="auth-input" placeholder="Display name (optional)">
+
+                <div class="setup-field-label">Location</div>
+                <div class="setup-loc-row">
+                    <input type="text" id="setup-location" class="auth-input" placeholder="City or zip code (optional)" style="flex:1">
+                    <button id="setup-gps-btn" class="setup-gps-btn" title="Use my location">
+                        <i class="fa-solid fa-location-arrow"></i>
+                    </button>
+                </div>
+                <p id="setup-loc-status" class="auth-subtext" style="margin-top:4px;font-size:0.75rem;min-height:16px;"></p>
+
+                <div class="setup-field-label">Temperature Unit</div>
+                <div class="setup-temp-row">
+                    <button class="setup-temp-btn setup-temp-btn--active" data-unit="F">°F</button>
+                    <button class="setup-temp-btn" data-unit="C">°C</button>
+                </div>
+
+                <button id="setup-submit-btn" class="primary-button auth-button" style="margin-top:20px;">
+                    Get Started <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    `;
+
+    let selectedUnit = 'F';
+
+    // Avatar preview
+    function compressProfileImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const MAX = 200;
+                    const scale = Math.min(MAX / img.width, MAX / img.height, 1);
+                    const canvas = document.createElement('canvas');
+                    canvas.width  = Math.round(img.width  * scale);
+                    canvas.height = Math.round(img.height * scale);
+                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.75));
+                };
+                img.onerror = reject;
+                img.src = e.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    const avatarRow     = container.querySelector('#setup-avatar-row');
+    const avatarPreview = container.querySelector('#setup-avatar-preview');
+    const picInput      = container.querySelector('#setup-pic-input');
+    const locStatus     = container.querySelector('#setup-loc-status');
+
+    avatarRow.addEventListener('click', () => picInput.click());
+    picInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            newPhotoURL = await compressProfileImage(file);
+            avatarPreview.innerHTML = '';
+            avatarPreview.style.backgroundImage = `url('${newPhotoURL}')`;
+            avatarPreview.style.backgroundSize  = 'cover';
+            avatarPreview.style.backgroundPosition = 'center';
+        } catch (err) { console.error(err); }
+    });
+
+    // Temperature toggle
+    container.querySelectorAll('.setup-temp-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            container.querySelectorAll('.setup-temp-btn').forEach(b => b.classList.remove('setup-temp-btn--active'));
+            btn.classList.add('setup-temp-btn--active');
+            selectedUnit = btn.dataset.unit;
+        });
+    });
+
+    // GPS location
+    container.querySelector('#setup-gps-btn').addEventListener('click', async () => {
+        locStatus.textContent = 'Getting location…';
+        try {
+            const { lat, lon } = await getCurrentBrowserLocation();
+            const weather = await fetchWeather(`${lat.toFixed(4)},${lon.toFixed(4)}`, selectedUnit);
+            if (!weather?.city) throw new Error('Could not resolve location.');
+            container.querySelector('#setup-location').value = `${weather.city}, ${weather.region}`;
+            locStatus.textContent = '';
+        } catch (err) {
+            locStatus.textContent = `Could not get location.`;
+        }
+    });
+
+    // Submit
+    container.querySelector('#setup-submit-btn').addEventListener('click', async () => {
+        const submitBtn = container.querySelector('#setup-submit-btn');
+        const name      = container.querySelector('#setup-name').value.trim();
+        const location  = container.querySelector('#setup-location').value.trim();
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+        try {
+            const updates = {
+                temperatureUnit: selectedUnit,
+                setupComplete:   true,
+            };
+            if (name)        updates.displayName  = name;
+            if (location)    updates.location      = location;
+            if (newPhotoURL) updates.profilePicURL = newPhotoURL;
+
+            await updateUserProfile(user.uid, updates);
+            onComplete();
+        } catch (err) {
+            console.error(err);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Get Started <i class="fa-solid fa-arrow-right"></i>';
+        }
+    });
+}
+
+// ----------------------------------------------------
 // APP INITIALIZATION
 // ----------------------------------------------------
 
@@ -397,13 +543,33 @@ onAuthStateChanged(auth, async (user) => {
 
         // Fetch User Profile
         let userProfile = {};
+        let isNewUser   = false;
         try {
             const docSnap = await getDoc(doc(db, 'users', user.uid));
             if (docSnap.exists()) {
                 userProfile = docSnap.data();
+            } else {
+                // First-time Google sign-in — create initial doc
+                isNewUser = true;
+                await setDoc(doc(db, 'users', user.uid), {
+                    email: user.email,
+                    joined: new Date().toISOString(),
+                    temperatureUnit: 'F',
+                });
             }
         } catch (e) {
             console.error("Error fetching profile", e);
+        }
+
+        // New users or users who haven't completed setup → show setup form
+        if (isNewUser || !userProfile.setupComplete) {
+            bottomNav.style.display = 'none';
+            profileMenuRoot.style.display = 'none';
+            renderProfileSetup(appContent, user, () => {
+                // After setup, reload so onAuthStateChanged re-fires with fresh profile
+                window.location.reload();
+            });
+            return;
         }
 
         // Mount the persistent profile menu (top-right, all screens)

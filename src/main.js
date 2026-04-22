@@ -424,9 +424,9 @@ function renderProfileSetup(container, user, onComplete) {
 
                 <input type="text" id="setup-name" class="auth-input" placeholder="Display name (optional)">
 
-                <div class="setup-field-label">Location</div>
+                <div class="setup-field-label">Location <span style="color:#f44336;margin-left:2px;">*</span></div>
                 <div class="setup-loc-row">
-                    <input type="text" id="setup-location" class="auth-input" placeholder="City or zip code (optional)" style="flex:1">
+                    <input type="text" id="setup-location" class="auth-input" placeholder="City or zip code" style="flex:1">
                     <button id="setup-gps-btn" class="setup-gps-btn" title="Use my location">
                         <i class="fa-solid fa-location-arrow"></i>
                     </button>
@@ -514,9 +514,21 @@ function renderProfileSetup(container, user, onComplete) {
 
     // Submit
     container.querySelector('#setup-submit-btn').addEventListener('click', async () => {
-        const submitBtn = container.querySelector('#setup-submit-btn');
-        const name      = container.querySelector('#setup-name').value.trim();
-        const location  = container.querySelector('#setup-location').value.trim();
+        const submitBtn   = container.querySelector('#setup-submit-btn');
+        const name        = container.querySelector('#setup-name').value.trim();
+        const location    = container.querySelector('#setup-location').value.trim();
+        const locInput    = container.querySelector('#setup-location');
+
+        if (!location) {
+            locInput.classList.add('auth-input--error');
+            locInput.focus();
+            locStatus.textContent = 'Location is required.';
+            locStatus.style.color = '#f44336';
+            return;
+        }
+        locInput.classList.remove('auth-input--error');
+        locStatus.textContent = '';
+        locStatus.style.color = '';
 
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';

@@ -1,24 +1,53 @@
-# PlantPal 🌱
+# PlantPal
 
-PlantPal is a smart plant care companion application designed to help users discover, track, and care for their indoor plants. It features a personalized plant quiz, a care dashboard with automated watering schedules, and localized weather integration to help plant parents succeed.
+PlantPal is a mobile-first plant care companion that helps you discover, track, and maintain your indoor plants. From a guided plant quiz to a daily care dashboard and personal photo journal, PlantPal keeps your plants thriving.
 
-## ✨ Features
+**Live App:** https://fir-setup-f2b47.web.app/
 
-- **🌱 Plant Matchmaker Quiz:** Find the perfect plant based on your lighting, schedule, and pet safety needs.
-- **🔎 Robust Search:** Explore a massive database of plants (powered by Perenual API) with details on sunlight, watering, and toxicity.
-- **📅 Smart Care Dashboard:** Automatically calculates watering schedules and generates "To-Do" tasks when plants are thirsty.
-- **🏡 My Plants Gallery:** A visual collection of your plants with custom nicknames and photos.
-- **weather Localized Insights:** Fetches real-time weather data for your location to provide context for plant care.
-- **🌗 Dark Mode UI:** A lush, dark-themed interface built with custom SCSS.
+---
 
-## 🛠️ Tech Stack
+## Features
 
-- **Frontend:** JavaScript (ES6+), [Vite](https://vitejs.dev/)
-- **Styling:** SCSS / SASS
-- **Backend:** [Firebase](https://firebase.google.com/) (Auth, Firestore, Storage)
+**Plant Matchmaker Quiz**
+Answer a few questions about your space and lifestyle — PlantPal recommends the best plants for you based on your light conditions and care availability.
+
+**Plant Search & Discovery**
+Browse and search a curated catalog of common houseplants. Each plant page includes care requirements, light needs, watering frequency, toxicity info, and detailed care notes.
+
+**Daily Care Dashboard (Home)**
+A lockscreen-style hero cycles through your personal plant photos with a live weather overlay showing your location, current conditions, date, and time. Below it, today's tasks are auto-generated — watering reminders, fertilizing due dates, and monthly progress update prompts.
+
+**My Plants Gallery**
+A visual gallery of all your plants with custom nicknames, profile photos, and individual detail pages showing care stats, last watered/fertilized dates, and care level tags.
+
+**Plant Journal**
+Log monthly progress updates with a photo, written notes, and a health rating (1–5). Photos are stored to your personal gallery and cycle through the home hero.
+
+**Care Actions**
+Water, fertilize, and journal directly from task cards or a plant's detail page — all synced to your Firebase account in real time.
+
+**Weather Integration**
+Real-time local weather displayed on the home hero using Open-Meteo with reverse geolocation.
+
+**User Profiles**
+Customize your display name, profile photo, temperature unit preference (°C / °F), and location settings.
+
+---
+
+## Tech Stack
+
+- **Frontend:** Vanilla JavaScript (ES6+), [Vite](https://vitejs.dev/)
+- **Styling:** SCSS
+- **Backend:** [Firebase](https://firebase.google.com/) — Auth, Firestore, Realtime Database
 - **APIs:**
-  - [Perenual API](https://perenual.com/) (Plant Data)
-  - [WeatherAPI](https://www.weatherapi.com/) (Real-time Weather)
+  - [Open-Meteo](https://open-meteo.com/) (Weather)
+  - Firebase Realtime Database (Plant catalog)
 
-  ## 🌎 Global Link
-  https://fir-setup-f2b47.web.app/#account
+---
+
+## Running Locally
+
+```bash
+npm install
+npm run dev
+```

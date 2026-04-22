@@ -19,20 +19,20 @@ function weatherIconClass(code, isDay) {
     return 'fa-solid fa-cloud';
 }
 
-// ── Plant care tips (sourced from RHS, AHS, University Extensions) ─────────────
+// ── Plant care tips ───────────────────────────────────────────────────────────
 const CARE_TIPS = [
-    "Water only when the top inch of soil is dry — overwatering is the leading cause of houseplant death. (RHS)",
-    "Wipe dusty leaves with a damp cloth monthly to maximise light absorption and photosynthesis. (RHS)",
-    "Repot in spring when roots circle the drainage holes — move up just one pot size to prevent root rot. (AHS)",
-    "Fertilise every 2–4 weeks in spring and summer only; skip feeding entirely during winter. (RHS)",
+    "Water only when the top inch of soil is dry — overwatering is the leading cause of houseplant death.",
+    "Wipe dusty leaves with a damp cloth monthly to maximise light absorption and photosynthesis.",
+    "Repot in spring when roots circle the drainage holes — move up just one pot size to prevent root rot.",
+    "Fertilise every 2–4 weeks in spring and summer only; skip feeding entirely during winter.",
     "Most houseplants prefer bright indirect light — direct afternoon sun can scorch leaves within minutes.",
-    "Group plants together to create a humid microclimate naturally beneficial to tropical species. (RHS)",
-    "Prune just above a leaf node with clean scissors to encourage bushier, healthier new growth. (Clemson Extension)",
-    "Check the undersides of leaves weekly — spider mites, aphids, and scale insects hide there. (NC State Extension)",
-    "Yellowing leaves typically signal overwatering or poor drainage, not underwatering. (University of Minnesota Extension)",
+    "Group plants together to create a humid microclimate naturally beneficial to tropical species.",
+    "Prune just above a leaf node with clean scissors to encourage bushier, healthier new growth.",
+    "Check the undersides of leaves weekly — spider mites, aphids, and scale insects hide there.",
+    "Yellowing leaves typically signal overwatering or poor drainage, not underwatering.",
     "Use room-temperature water — cold water can shock roots, especially on tropical houseplants.",
     "Rotate your plant a quarter turn each week so all sides receive equal light exposure.",
-    "In winter, move plants closer to windows as natural light levels drop significantly. (RHS)",
+    "In winter, move plants closer to windows as natural light levels drop significantly.",
 ];
 
 // ── Greeting ──────────────────────────────────────────────────────────────────
@@ -67,40 +67,61 @@ function weatherWidgetHTML(weatherData, tempUnit) {
         </div>`;
 }
 
-function collageWidgetHTML(photos, plants) {
-    // Build a pool of up to 4 images: gallery photos first, then plant profile pics
-    let pool = photos.slice(0, 4).map(p => p.photoURL);
-    if (pool.length < 4) {
-        plants
-            .filter(p => p.profilePicURL && !pool.includes(p.profilePicURL))
-            .forEach(p => { if (pool.length < 4) pool.push(p.profilePicURL); });
+function carouselWidgetHTML(photos, plants) {
+    // Build pool: gallery photos first, then plant profile pics as fallback
+    let pool = [...photos];
+    if (pool.length === 0) {
+        pool = plants
+            .filter(p => p.profilePicURL)
+            .map(p => ({
+                photoURL:  p.profilePicURL,
+                plantName: p.customName || 'My Plant',
+                timestamp: p.dateAdded || new Date().toISOString(),
+            }));
     }
-    // Fill remaining slots with a muted placeholder
-    while (pool.length < 4) pool.push(null);
+    pool = pool.sort(() => Math.random() - 0.5).slice(0, 20);
 
-    const cells = pool.map(url => url
-        ? `<div class="hw-collage-cell" style="background-image:url('${url}')"></div>`
-        : `<div class="hw-collage-cell hw-collage-cell--empty">${logoSVG('hw-collage-logo')}</div>`
-    ).join('');
+    if (pool.length === 0) {
+        return `
+            <div class="hw-carousel hw-carousel--empty" id="hw-carousel">
+                <a href="#search" class="hw-carousel-add hw-carousel-add--empty">
+                    <i class="fa-solid fa-plus"></i>
+                </a>
+                <p class="hw-carousel-empty-text">Add your first plant<br>to get started</p>
+            </div>`;
+    }
 
-    return `<div class="hw-collage">${cells}</div>`;
+    const slidesHTML = pool.map((p, i) => `
+        <div class="hw-carousel-slide${i === 0 ? ' is-active' : ''}"
+             style="background-image:url('${p.photoURL}')"></div>
+    `).join('');
+
+    const dotsHTML = pool.length > 1
+        ? `<div class="hw-carousel-dots">${pool.map((_, i) =>
+            `<div class="hw-carousel-dot${i === 0 ? ' is-active' : ''}"></div>`
+          ).join('')}</div>`
+        : '';
+
+    return `
+        <div class="hw-carousel" id="hw-carousel">
+            ${slidesHTML}
+            ${dotsHTML}
+            <a href="#search" class="hw-carousel-add" aria-label="Add plant">
+                <i class="fa-solid fa-plus"></i>
+            </a>
+        </div>`;
 }
 
 function careTipHTML() {
     const tip = CARE_TIPS[Math.floor(Math.random() * CARE_TIPS.length)];
     return `
         <div class="hw-tips">
-            <div class="hw-tips-icon"><i class="fa-solid fa-circle-info"></i></div>
+            <div class="hw-tips-header">
+                <i class="fa-solid fa-circle-info hw-tips-icon"></i>
+                <span class="hw-tips-label">Plant Care Tips</span>
+            </div>
             <p class="hw-tips-text">${tip}</p>
         </div>`;
-}
-
-function addPlantBtnHTML() {
-    return `
-        <a href="#search" class="hw-add-btn" title="Add a plant">
-            <span class="hw-add-plus">+</span>
-            <i class="fa-solid fa-leaf hw-add-leaf"></i>
-        </a>`;
 }
 
 // ── Task card HTML ────────────────────────────────────────────────────────────
@@ -111,9 +132,9 @@ function taskCardHTML(plant, type) {
         : 'background:#1a3d28;';
 
     const typeConfig = {
-        water:    { icon: 'fa-droplet',   color: '#64b5f6', label: 'Needs Water',         btnIcon: 'fa-check', btnClass: 'task-done-btn',                          dataAttr: `data-type="water" data-id="${plant.id}" data-interval="${plant.intervalDays}"` },
-        fertilize:{ icon: 'fa-seedling',  color: '#def39b', label: 'Fertilize Due',       btnIcon: 'fa-check', btnClass: 'task-done-btn',                          dataAttr: `data-type="fertilize" data-id="${plant.id}"` },
-        journal:  { icon: 'fa-book-open', color: '#a8e063', label: 'Progress Update Due', btnIcon: 'fa-pen',   btnClass: 'task-done-btn task-journal-btn', dataAttr: `data-type="journal" data-id="${plant.id}"` },
+        water:    { btnIcon: 'fa-check', btnClass: 'task-done-btn',                          dataAttr: `data-type="water" data-id="${plant.id}" data-interval="${plant.intervalDays}"` },
+        fertilize:{ btnIcon: 'fa-check', btnClass: 'task-done-btn',                          dataAttr: `data-type="fertilize" data-id="${plant.id}"` },
+        journal:  { btnIcon: 'fa-pen',   btnClass: 'task-done-btn task-journal-btn', dataAttr: `data-type="journal" data-id="${plant.id}"` },
     };
     const cfg = typeConfig[type];
 
@@ -122,7 +143,6 @@ function taskCardHTML(plant, type) {
             <div class="task-img" style="${imgStyle}"></div>
             <div class="task-info">
                 <h4>${plant.customName}</h4>
-                <p><i class="fa-solid ${cfg.icon}" style="color:${cfg.color};"></i> ${cfg.label}</p>
             </div>
             <button class="${cfg.btnClass}" ${cfg.dataAttr}>
                 <i class="fa-solid ${cfg.btnIcon}"></i>
@@ -130,13 +150,13 @@ function taskCardHTML(plant, type) {
         </div>`;
 }
 
-function taskSectionHTML(title, icon, color, cards) {
+function taskSectionHTML(title, icon, cards) {
     if (!cards.length) return '';
     return `
         <div class="task-section">
-            <div class="task-section-header">
-                <i class="fa-solid ${icon}" style="color:${color};"></i>
-                <span>${title}</span>
+            <div class="task-type-pill">
+                <i class="fa-solid ${icon}"></i>
+                ${title}
             </div>
             ${cards.join('')}
         </div>`;
@@ -214,9 +234,9 @@ export async function renderHomePage(container, profile, weatherData, authUser) 
             </div>`;
     } else {
         tasksHTML = `<div class="task-list">` +
-            taskSectionHTML('Water',           'fa-droplet',   '#64b5f6', waterPlants.map(p     => taskCardHTML(p, 'water'))) +
-            taskSectionHTML('Fertilize',       'fa-seedling',  '#def39b', fertilizePlants.map(p => taskCardHTML(p, 'fertilize'))) +
-            taskSectionHTML('Progress Update', 'fa-book-open', '#a8e063', journalPlants.map(p   => taskCardHTML(p, 'journal'))) +
+            taskSectionHTML('Water',           'fa-droplet',   waterPlants.map(p     => taskCardHTML(p, 'water'))) +
+            taskSectionHTML('Fertilize',       'fa-seedling',  fertilizePlants.map(p => taskCardHTML(p, 'fertilize'))) +
+            taskSectionHTML('Progress Update', 'fa-book-open', journalPlants.map(p   => taskCardHTML(p, 'journal'))) +
         `</div>`;
     }
 
@@ -226,16 +246,15 @@ export async function renderHomePage(container, profile, weatherData, authUser) 
 
             <div class="hw-header">
                 <div class="hw-header-left">
-                    ${logoSVG('hw-logo')}
+                    <div class="hw-logo-circle">${logoSVG('hw-logo')}</div>
                     <span class="hw-greeting">${getGreeting(displayName)}</span>
                 </div>
             </div>
 
             <div class="hw-grid">
+                ${carouselWidgetHTML(galleryPhotos, plants)}
                 ${weatherWidgetHTML(weatherData, tempUnit)}
-                ${collageWidgetHTML(galleryPhotos, plants)}
                 ${careTipHTML()}
-                ${addPlantBtnHTML()}
             </div>
 
             <div class="home-tasks-wrap">
@@ -254,6 +273,24 @@ export async function renderHomePage(container, profile, weatherData, authUser) 
         e.preventDefault();
         document.getElementById('pmenu-open-btn')?.click();
     });
+
+    // ── Carousel autoplay ─────────────────────────────────────────────────────
+    const carousel = container.querySelector('#hw-carousel');
+    if (carousel) {
+        const slides = carousel.querySelectorAll('.hw-carousel-slide');
+        const dots   = carousel.querySelectorAll('.hw-carousel-dot');
+        if (slides.length > 1) {
+            let idx = 0;
+            if (container._carouselInterval) clearInterval(container._carouselInterval);
+            container._carouselInterval = setInterval(() => {
+                slides[idx].classList.remove('is-active');
+                dots[idx]?.classList.remove('is-active');
+                idx = (idx + 1) % slides.length;
+                slides[idx].classList.add('is-active');
+                dots[idx]?.classList.add('is-active');
+            }, 3500);
+        }
+    }
 
     container.querySelectorAll('.task-done-btn').forEach(btn => {
         btn.addEventListener('click', async () => {

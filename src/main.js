@@ -574,7 +574,6 @@ const profileMenuRoot = document.getElementById('profile-menu-root');
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         bottomNav.style.display = 'flex';
-        profileMenuRoot.style.display = 'block';
 
         // Fetch User Profile
         let userProfile = {};
@@ -598,14 +597,13 @@ onAuthStateChanged(auth, async (user) => {
         if (_pendingSetup) {
             _pendingSetup = false;
             bottomNav.style.display = 'none';
-            profileMenuRoot.style.display = 'none';
             renderProfileSetup(appContent, user, () => {
                 window.location.reload();
             });
             return;
         }
 
-        // Mount the persistent profile menu (top-right, all screens)
+        // Mount the persistent profile menu (inside bottom nav)
         mountProfileMenu(profileMenuRoot, userProfile, user);
 
         if (window.location.hash === '' || window.location.hash === '#') {
@@ -617,7 +615,6 @@ onAuthStateChanged(auth, async (user) => {
 
     } else {
         bottomNav.style.display = 'none';
-        profileMenuRoot.style.display = 'none';
         renderAuth(appContent);
     }
 });

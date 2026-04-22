@@ -2366,43 +2366,46 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
 // ----------------------------------------------------
 
 #profile-menu-root {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    z-index: 1000;
-    // On wider viewports, keep button inside the 600px content column
-    @media (min-width: 632px) {
-        right: calc((100vw - 600px) / 2 + 16px);
-    }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    position: relative;
 }
 
 .pmenu-root {
     position: relative;
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: center;
+    width: 100%;
 }
 
 // ── Profile button ────────────────────────────────────────────────────────────
 
 .pmenu-btn {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     border: none;
     padding: 0;
     background: none;
     cursor: pointer;
-    overflow: hidden;            // clips avatar to circle
-    display: block;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
     outline: 2px solid transparent;
-    outline-offset: 3px;
-    transition: outline-color 0.2s ease, box-shadow 0.2s ease;
+    outline-offset: 2px;
+    transition: outline-color 0.2s ease, opacity 0.2s ease;
 
     &--open {
         outline-color: $color-green-accent;
-        box-shadow: 0 0 0 4px rgba(168, 224, 99, 0.18);
+        opacity: 1;
     }
+
+    &:hover { opacity: 1; }
 }
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
@@ -2439,7 +2442,9 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
 // ── Dropdown panel ────────────────────────────────────────────────────────────
 
 .pmenu-dropdown {
-    margin-top: 10px;
+    position: absolute;
+    bottom: calc(100% + 14px);
+    right: -8px;
     width: 280px;
     background-color: lighten($color-content-bg, 3%);
     border: 1px solid rgba(255,255,255,0.08);
@@ -2447,6 +2452,8 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
     padding: 16px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     animation: fadeIn 0.15s ease-out;
+    z-index: 200;
+    @media (max-width: 320px) { width: calc(100vw - 32px); right: 0; }
 }
 
 .pmenu-user-row {
@@ -2943,25 +2950,39 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
     display: flex;
     align-items: center;
     padding: 20px 16px 10px;
-    padding-right: 56px; // leave room for fixed profile button
 }
 
 .hw-header-left {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     min-width: 0;
 }
 
-.hw-logo {
-    width: 24px;
-    height: 27px;
-    color: $color-green-accent;
+.hw-logo-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: $color-green-accent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
 }
 
+.hw-logo {
+    width: 18px;
+    height: 20px;
+    color: $color-dark-bg;
+    flex-shrink: 0;
+    stroke: currentColor;
+    stroke-width: 14px;
+    paint-order: stroke fill;
+    stroke-linejoin: round;
+}
+
 .hw-greeting {
-    font-size: 1.05rem;
+    font-size: 1.4rem;
     font-weight: 700;
     color: $color-text-light;
     white-space: nowrap;
@@ -3002,15 +3023,14 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
 }
 
 .hw-weather-icon {
-    font-size: 1rem;
+    font-size: 1.4rem;
     color: $color-dark-bg;
 }
 
 .hw-weather-condition {
-    font-size: 0.78rem;
+    font-size: 0.88rem;
     font-weight: 600;
     color: $color-dark-bg;
-    opacity: 0.65;
 }
 
 .hw-weather-temp {
@@ -3034,7 +3054,6 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
     font-size: 0.82rem;
     font-weight: 700;
     color: $color-dark-bg;
-    opacity: 0.6;
 }
 
 .hw-weather-empty-icon {
@@ -3063,34 +3082,92 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
     &:hover { background: rgba(168,224,99,0.2); }
 }
 
-// ── Plant collage widget ──────────────────────────────────────────────────────
-.hw-collage {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 4px;
+// ── Photo carousel widget ─────────────────────────────────────────────────────
+.hw-carousel {
+    grid-row: 1 / 3;
     border-radius: 20px;
     overflow: hidden;
+    position: relative;
+    min-height: 200px;
     align-self: stretch;
-}
-
-.hw-collage-cell {
-    background-color: $color-content-bg;
-    background-size: cover;
-    background-position: center;
-    min-height: 0;
 
     &--empty {
+        background: $color-content-bg;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-
-        .hw-collage-logo {
-            width: 22px;
-            height: 25px;
-            color: rgba(168,224,99,0.15);
-        }
+        gap: 0;
     }
+}
+
+.hw-carousel-slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    &.is-active { opacity: 1; }
+}
+
+.hw-carousel-dots {
+    position: absolute;
+    bottom: 38px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    z-index: 2;
+}
+
+.hw-carousel-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+    transition: background 0.3s;
+    &.is-active { background: #fff; }
+}
+
+.hw-carousel-add {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 3;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: $color-green-accent;
+    color: $color-dark-bg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+    &:hover { transform: scale(1.08); }
+
+    &--empty {
+        position: relative;
+        bottom: auto;
+        right: auto;
+        width: 52px;
+        height: 52px;
+        font-size: 1.4rem;
+        margin-bottom: 8px;
+        color: $color-dark-bg;
+    }
+}
+
+.hw-carousel-empty-text {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    line-height: 1.5;
+    margin: 0;
+    font-family: $font-header;
 }
 
 // ── Plant care tips ───────────────────────────────────────────────────────────
@@ -3099,26 +3176,29 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
     border-radius: 16px;
     padding: 13px 14px;
     display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 7px;
+    align-self: stretch;
+}
+
+.hw-tips-header {
+    display: flex;
     align-items: center;
-    gap: 12px;
-    align-self: center;
+    gap: 6px;
 }
 
 .hw-tips-icon {
+    font-size: 0.85rem;
+    color: $color-green-accent;
     flex-shrink: 0;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: rgba(168,224,99,0.1);
-    border: 1px solid rgba(168,224,99,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+}
 
-    i {
-        font-size: 0.8rem;
-        color: $color-green-accent;
-    }
+.hw-tips-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: $color-green-accent;
+    font-family: $font-header;
 }
 
 .hw-tips-text {
@@ -3129,45 +3209,6 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
     font-family: $font-header;
 }
 
-// ── Add plant button ──────────────────────────────────────────────────────────
-.hw-add-btn {
-    width: 62px;
-    height: 62px;
-    border-radius: 50%;
-    background: $color-green-accent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    text-decoration: none;
-    align-self: center;
-    justify-self: center;
-    transition: transform 0.15s ease;
-    &:hover { transform: scale(1.06); }
-}
-
-.hw-add-leaf {
-    font-size: 1.55rem;
-    color: $color-dark-bg;
-}
-
-.hw-add-plus {
-    position: absolute;
-    top: 7px;
-    left: 7px;
-    width: 17px;
-    height: 17px;
-    border-radius: 50%;
-    background: $color-dark-bg;
-    color: $color-green-accent;
-    font-size: 0.8rem;
-    font-weight: 900;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: $font-header;
-}
 
 .home-tasks-wrap {
     padding: 20px 16px 100px;
@@ -3830,18 +3871,21 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
     gap: 10px;
 }
 
-.task-section-header {
-    display: flex;
+.task-type-pill {
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.75rem;
+    gap: 6px;
+    background: $color-green-accent;
+    color: $color-dark-bg;
+    padding: 5px 13px;
+    border-radius: 20px;
+    font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
-    opacity: 0.6;
-    padding-left: 2px;
+    letter-spacing: 0.06em;
+    font-family: $font-header;
 
-    i { font-size: 0.8rem; }
+    i { font-size: 0.75rem; }
 }
 
 .task-card {

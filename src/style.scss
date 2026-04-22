@@ -81,21 +81,28 @@ button {
 }
 
 // Default Inputs
-input[type="email"], 
+input[type="email"],
 input[type="password"],
-.location-input-field { 
+input[type="text"],
+.location-input-field,
+.auth-input {
     width: 100%;
     padding: 12px;
     box-sizing: border-box;
-    background-color: $color-dark-bg; 
+    background-color: $color-dark-bg;
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: $color-text-light;
     border-radius: 12px;
     font-size: 1rem;
+    font-family: $font-header;
 
     &:focus {
-      border-color: $color-green-accent; 
-      outline: none;
+        border-color: $color-green-accent;
+        outline: none;
+    }
+
+    &::placeholder {
+        color: rgba(255, 255, 255, 0.3);
     }
 }
 
@@ -638,25 +645,7 @@ input[type="password"],
     justify-content: center;
     align-items: center;
     position: relative;
-    overflow: hidden;
-
-    &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: url('/pp-auth-bg.jpeg') center center / cover no-repeat;
-        filter: blur(6px);
-        transform: scale(1.03); // prevent blur edge bleed
-        z-index: 0;
-    }
-
-    &::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: rgba(10, 26, 16, 0.55);
-        z-index: 0;
-    }
+    background-color: $color-dark-bg;
 
     .auth-form-container {
         position: relative;

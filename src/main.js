@@ -167,9 +167,22 @@ function renderOnboarding(container) {
         localStorage.setItem('plantpal_onboarded', '1');
         const wrapper = container.querySelector('#ob-wrapper');
         if (wrapper) {
-            wrapper.style.transition = 'opacity 0.4s ease';
-            wrapper.style.opacity = '0';
-            setTimeout(() => renderAuthForm(container), 400);
+            // Fade the photo slides to dark green, then fade entire wrapper out
+            const slides = wrapper.querySelectorAll('.ob-upper--photo');
+            slides.forEach(s => {
+                s.style.transition = 'opacity 0.5s ease';
+                s.style.opacity = '0';
+            });
+            const overlay = wrapper.querySelector('.ob-upper-overlay');
+            if (overlay) {
+                overlay.style.transition = 'background 0.5s ease';
+                overlay.style.background = '#0a1a10';
+            }
+            setTimeout(() => {
+                wrapper.style.transition = 'opacity 0.35s ease';
+                wrapper.style.opacity = '0';
+                setTimeout(() => renderAuthForm(container), 350);
+            }, 300);
         } else {
             renderAuthForm(container);
         }

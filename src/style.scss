@@ -2937,158 +2937,236 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
 }
 
 // ── Home Hero / Lockscreen ──────────────────────────────────────────────────
-.home-hero {
-    position: relative;
-    width: calc(100% - 32px);
-    margin: 16px 16px 0;
-    height: 70vh;
-    min-height: 360px;
-    overflow: hidden;
-    background: $color-dark-bg;
-    border-radius: 22px;
-}
+// ── Home widget grid ──────────────────────────────────────────────────────────
 
-.home-hero-slide {
-    position: absolute;
-    inset: 0;
-    background-size: cover;
-    background-position: center;
-    opacity: 0;
-    transition: opacity 1.4s ease;
-    &.is-active { opacity: 1; }
-}
-
-// Seamless gradient: photo → dark green app background
-.home-hero-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        to bottom,
-        transparent            0%,
-        transparent            28%,
-        rgba(10, 26, 16, 0.10) 48%,
-        rgba(10, 26, 16, 0.60) 64%,
-        rgba(10, 26, 16, 0.92) 74%,
-        #0a1a10                82%
-    );
-    z-index: 1;
-}
-
-.home-hero-content {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
+.hw-header {
     display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-}
-
-// ── Plant label — top-left, no pill ──────────────────────────────────────────
-.hero-plant-label {
-    position: absolute;
-    top: 12px;
-    left: 14px;
-    transition: opacity 0.4s ease;
-
-    .hero-pl-name {
-        font-size: 0.72rem;
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.82);
-        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
-        display: block;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 150px;
-    }
-
-    .hero-pl-date {
-        font-size: 0.6rem;
-        color: rgba(255, 255, 255, 0.44);
-        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-        display: block;
-    }
-}
-
-// ── Dots ──────────────────────────────────────────────────────────────────────
-.home-hero-dots {
-    display: flex;
-    justify-content: center;
-    gap: 5px;
-    padding-bottom: 10px;
-    position: relative;
-    z-index: 3;
-}
-
-.home-hero-dot {
-    height: 4px;
-    width: 4px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.3);
-    transition: background 0.3s ease, width 0.3s ease;
-    &.is-active {
-        background: rgba(255, 255, 255, 0.85);
-        width: 14px;
-    }
-}
-
-// ── Bottom info bar ───────────────────────────────────────────────────────────
-.hhg {
-    width: 100%;
-    padding: 4px 16px 20px;
-    display: flex;
-    justify-content: space-evenly;
     align-items: center;
+    padding: 20px 16px 10px;
+    padding-right: 56px; // leave room for fixed profile button
 }
 
-.hhg-item {
+.hw-header-left {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 2px;
-    flex: 1;
+    gap: 10px;
     min-width: 0;
 }
 
-.hhg-item-row {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+.hw-logo {
+    width: 24px;
+    height: 27px;
+    color: $color-green-accent;
+    flex-shrink: 0;
 }
 
-.hhg-item-icon {
-    font-size: 0.95rem;
-    color: rgba(168, 224, 99, 0.72);
-}
-
-.hhg-item-val {
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.88);
-    white-space: nowrap;
-    &--lg {
-        font-size: 1.45rem;
-        font-weight: 700;
-        letter-spacing: -0.5px;
-        line-height: 1;
-    }
-}
-
-.hhg-item-sub {
-    font-size: 0.6rem;
-    color: rgba(255, 255, 255, 0.4);
-    text-align: center;
+.hw-greeting {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: $color-text-light;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
 }
 
-.hhg-sep {
-    width: 1px;
-    height: 30px;
-    background: rgba(168, 224, 99, 0.12);
+.hw-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 10px;
+    padding: 0 16px;
+}
+
+// ── Weather widget ────────────────────────────────────────────────────────────
+.hw-weather {
+    background: $color-green-accent;
+    border-radius: 20px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 160px;
+
+    &--empty {
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: $color-content-bg;
+        border: 1px solid rgba(168,224,99,0.15);
+    }
+}
+
+.hw-weather-top {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: auto;
+}
+
+.hw-weather-icon {
+    font-size: 1rem;
+    color: $color-dark-bg;
+}
+
+.hw-weather-condition {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: $color-dark-bg;
+    opacity: 0.65;
+}
+
+.hw-weather-temp {
+    font-size: 3.4rem;
+    font-weight: 900;
+    color: $color-dark-bg;
+    line-height: 1;
+    margin: 10px 0 4px;
+    font-family: $font-header;
+    letter-spacing: -1px;
+}
+
+.hw-weather-deg {
+    font-size: 2rem;
+    font-weight: 700;
+    vertical-align: super;
+    line-height: 0;
+}
+
+.hw-weather-city {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: $color-dark-bg;
+    opacity: 0.6;
+}
+
+.hw-weather-empty-icon {
+    font-size: 1.4rem;
+    color: rgba(168,224,99,0.4);
+}
+
+.hw-weather-empty-text {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.hw-set-loc-btn {
+    margin-top: 4px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: rgba(168,224,99,0.12);
+    border: 1px solid rgba(168,224,99,0.3);
+    color: $color-green-accent;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    &:hover { background: rgba(168,224,99,0.2); }
+}
+
+// ── Plant collage widget ──────────────────────────────────────────────────────
+.hw-collage {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 4px;
+    border-radius: 20px;
+    overflow: hidden;
+    align-self: stretch;
+}
+
+.hw-collage-cell {
+    background-color: $color-content-bg;
+    background-size: cover;
+    background-position: center;
+    min-height: 0;
+
+    &--empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .hw-collage-logo {
+            width: 22px;
+            height: 25px;
+            color: rgba(168,224,99,0.15);
+        }
+    }
+}
+
+// ── Plant care tips ───────────────────────────────────────────────────────────
+.hw-tips {
+    background: $color-content-bg;
+    border-radius: 16px;
+    padding: 13px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    align-self: center;
+}
+
+.hw-tips-icon {
     flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(168,224,99,0.1);
+    border: 1px solid rgba(168,224,99,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+        font-size: 0.8rem;
+        color: $color-green-accent;
+    }
+}
+
+.hw-tips-text {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.45;
+    margin: 0;
+    font-family: $font-header;
+}
+
+// ── Add plant button ──────────────────────────────────────────────────────────
+.hw-add-btn {
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: $color-green-accent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    text-decoration: none;
+    align-self: center;
+    justify-self: center;
+    transition: transform 0.15s ease;
+    &:hover { transform: scale(1.06); }
+}
+
+.hw-add-leaf {
+    font-size: 1.55rem;
+    color: $color-dark-bg;
+}
+
+.hw-add-plus {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: $color-dark-bg;
+    color: $color-green-accent;
+    font-size: 0.8rem;
+    font-weight: 900;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-header;
 }
 
 .home-tasks-wrap {

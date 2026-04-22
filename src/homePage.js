@@ -5,18 +5,102 @@ import { openJournalModal } from './journalModal.js';
 import { logoSVG } from './logoSVG.js';
 import { PLANT_IMAGES } from './plantImages.js';
 
-// ── WMO weather code → Font Awesome icon ─────────────────────────────────────
-function weatherIcon(code, isDay) {
-    if (code === undefined || code === null) return 'fa-cloud';
-    if (code === 0)          return isDay ? 'fa-sun' : 'fa-moon';
-    if (code <= 2)           return isDay ? 'fa-cloud-sun' : 'fa-cloud-moon';
-    if (code === 3)          return 'fa-cloud';
-    if (code <= 49)          return 'fa-smog';
-    if (code <= 67)          return 'fa-cloud-rain';
-    if (code <= 77)          return 'fa-snowflake';
-    if (code <= 82)          return 'fa-cloud-showers-heavy';
-    if (code <= 99)          return 'fa-bolt-lightning';
-    return 'fa-cloud';
+// ── WMO weather code → full FA class string ───────────────────────────────────
+function weatherIconClass(code, isDay) {
+    if (code === undefined || code === null) return 'fa-solid fa-cloud';
+    if (code === 0)   return isDay ? 'fa-regular fa-sun'       : 'fa-regular fa-moon';
+    if (code <= 2)    return isDay ? 'fa-solid fa-cloud-sun'   : 'fa-solid fa-cloud-moon';
+    if (code === 3)   return 'fa-solid fa-cloud';
+    if (code <= 49)   return 'fa-solid fa-smog';
+    if (code <= 67)   return 'fa-solid fa-cloud-rain';
+    if (code <= 77)   return 'fa-regular fa-snowflake';
+    if (code <= 82)   return 'fa-solid fa-cloud-showers-heavy';
+    if (code <= 99)   return 'fa-solid fa-bolt-lightning';
+    return 'fa-solid fa-cloud';
+}
+
+// ── Plant care tips (sourced from RHS, AHS, University Extensions) ─────────────
+const CARE_TIPS = [
+    "Water only when the top inch of soil is dry — overwatering is the leading cause of houseplant death. (RHS)",
+    "Wipe dusty leaves with a damp cloth monthly to maximise light absorption and photosynthesis. (RHS)",
+    "Repot in spring when roots circle the drainage holes — move up just one pot size to prevent root rot. (AHS)",
+    "Fertilise every 2–4 weeks in spring and summer only; skip feeding entirely during winter. (RHS)",
+    "Most houseplants prefer bright indirect light — direct afternoon sun can scorch leaves within minutes.",
+    "Group plants together to create a humid microclimate naturally beneficial to tropical species. (RHS)",
+    "Prune just above a leaf node with clean scissors to encourage bushier, healthier new growth. (Clemson Extension)",
+    "Check the undersides of leaves weekly — spider mites, aphids, and scale insects hide there. (NC State Extension)",
+    "Yellowing leaves typically signal overwatering or poor drainage, not underwatering. (University of Minnesota Extension)",
+    "Use room-temperature water — cold water can shock roots, especially on tropical houseplants.",
+    "Rotate your plant a quarter turn each week so all sides receive equal light exposure.",
+    "In winter, move plants closer to windows as natural light levels drop significantly. (RHS)",
+];
+
+// ── Greeting ──────────────────────────────────────────────────────────────────
+function getGreeting(displayName) {
+    const hour = new Date().getHours();
+    const period = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+    const first  = displayName ? displayName.split(' ')[0] : '';
+    return `Good ${period}${first ? `, ${first}` : ''}`;
+}
+
+// ── Widget builders ───────────────────────────────────────────────────────────
+function weatherWidgetHTML(weatherData, tempUnit) {
+    if (!weatherData) {
+        return `
+            <div class="hw-weather hw-weather--empty">
+                <i class="fa-solid fa-location-dot hw-weather-empty-icon"></i>
+                <p class="hw-weather-empty-text">Set your location to see weather</p>
+                <button class="hw-set-loc-btn" id="set-location-prompt">Set location</button>
+            </div>`;
+    }
+    const temp = Math.round(tempUnit === 'F' ? weatherData.tempF : weatherData.tempC);
+    const icon = weatherIconClass(weatherData.conditionCode, weatherData.isDay);
+    const city = weatherData.city || weatherData.region || '—';
+    return `
+        <div class="hw-weather">
+            <div class="hw-weather-top">
+                <i class="${icon} hw-weather-icon"></i>
+                <span class="hw-weather-condition">${weatherData.conditionText || ''}</span>
+            </div>
+            <div class="hw-weather-temp">${temp}<span class="hw-weather-deg">°</span></div>
+            <div class="hw-weather-city">${city}</div>
+        </div>`;
+}
+
+function collageWidgetHTML(photos, plants) {
+    // Build a pool of up to 4 images: gallery photos first, then plant profile pics
+    let pool = photos.slice(0, 4).map(p => p.photoURL);
+    if (pool.length < 4) {
+        plants
+            .filter(p => p.profilePicURL && !pool.includes(p.profilePicURL))
+            .forEach(p => { if (pool.length < 4) pool.push(p.profilePicURL); });
+    }
+    // Fill remaining slots with a muted placeholder
+    while (pool.length < 4) pool.push(null);
+
+    const cells = pool.map(url => url
+        ? `<div class="hw-collage-cell" style="background-image:url('${url}')"></div>`
+        : `<div class="hw-collage-cell hw-collage-cell--empty">${logoSVG('hw-collage-logo')}</div>`
+    ).join('');
+
+    return `<div class="hw-collage">${cells}</div>`;
+}
+
+function careTipHTML() {
+    const tip = CARE_TIPS[Math.floor(Math.random() * CARE_TIPS.length)];
+    return `
+        <div class="hw-tips">
+            <div class="hw-tips-icon"><i class="fa-solid fa-circle-info"></i></div>
+            <p class="hw-tips-text">${tip}</p>
+        </div>`;
+}
+
+function addPlantBtnHTML() {
+    return `
+        <a href="#search" class="hw-add-btn" title="Add a plant">
+            <span class="hw-add-plus">+</span>
+            <i class="fa-solid fa-leaf hw-add-leaf"></i>
+        </a>`;
 }
 
 // ── Task card HTML ────────────────────────────────────────────────────────────
@@ -27,9 +111,9 @@ function taskCardHTML(plant, type) {
         : 'background:#1a3d28;';
 
     const typeConfig = {
-        water:    { icon: 'fa-droplet',   color: '#64b5f6', label: 'Needs Water',        btnIcon: 'fa-check', btnClass: 'task-done-btn',                         dataAttr: `data-type="water" data-id="${plant.id}" data-interval="${plant.intervalDays}"` },
-        fertilize:{ icon: 'fa-seedling',  color: '#def39b', label: 'Fertilize Due',      btnIcon: 'fa-check', btnClass: 'task-done-btn',                         dataAttr: `data-type="fertilize" data-id="${plant.id}"` },
-        journal:  { icon: 'fa-book-open', color: '#a8e063', label: 'Progress Update Due', btnIcon: 'fa-pen',  btnClass: 'task-done-btn task-journal-btn', dataAttr: `data-type="journal" data-id="${plant.id}"` },
+        water:    { icon: 'fa-droplet',   color: '#64b5f6', label: 'Needs Water',         btnIcon: 'fa-check', btnClass: 'task-done-btn',                          dataAttr: `data-type="water" data-id="${plant.id}" data-interval="${plant.intervalDays}"` },
+        fertilize:{ icon: 'fa-seedling',  color: '#def39b', label: 'Fertilize Due',       btnIcon: 'fa-check', btnClass: 'task-done-btn',                          dataAttr: `data-type="fertilize" data-id="${plant.id}"` },
+        journal:  { icon: 'fa-book-open', color: '#a8e063', label: 'Progress Update Due', btnIcon: 'fa-pen',   btnClass: 'task-done-btn task-journal-btn', dataAttr: `data-type="journal" data-id="${plant.id}"` },
     };
     const cfg = typeConfig[type];
 
@@ -58,144 +142,23 @@ function taskSectionHTML(title, icon, color, cards) {
         </div>`;
 }
 
-// ── Hero: lockscreen-style photo cycler ───────────────────────────────────────
-function formatHeroDate(timestamp) {
-    if (!timestamp) return '';
-    return new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function formatTime(date) {
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-}
-
-function initHero(heroEl, photos, weatherData, tempUnit) {
-    const now     = new Date();
-    const dayNum  = now.getDate();
-    const dayName = now.toLocaleDateString('en-US', { weekday: 'long' });
-
-    // Shuffle photos, cap at 20
-    const pool      = [...photos].sort(() => Math.random() - 0.5).slice(0, 20);
-    const hasPhotos = pool.length > 0;
-    const first     = pool[0];
-
-    const slidesHTML = pool.map((p, i) => `
-        <div class="home-hero-slide${i === 0 ? ' is-active' : ''}"
-             style="background-image:url('${p.photoURL}');"
-             data-name="${(p.plantName || '').replace(/"/g, '&quot;')}"
-             data-ts="${p.timestamp || ''}"></div>
-    `).join('');
-
-    // Dots (z-indexed above the widget's fade zone)
-    const dotsHTML = pool.length > 1
-        ? `<div class="home-hero-dots">${pool.map((_, i) => `<div class="home-hero-dot${i === 0 ? ' is-active' : ''}"></div>`).join('')}</div>`
-        : '';
-
-    // Plant label — top-left, no pill
-    const plantLabelHTML = hasPhotos ? `
-        <div class="hero-plant-label" id="hero-plant-label">
-            <p class="hero-pl-name">${first ? first.plantName : ''}</p>
-            <p class="hero-pl-date">${first ? formatHeroDate(first.timestamp) : ''}</p>
-        </div>` : '';
-
-    // Bottom widget — 4 items evenly spaced
-    let widgetInner = '';
-    if (weatherData) {
-        const tempValue = tempUnit === 'F' ? weatherData.tempF : weatherData.tempC;
-        const icon      = weatherIcon(weatherData.conditionCode, weatherData.isDay);
-        const city      = weatherData.city || weatherData.region || '—';
-        widgetInner = `
-            <div class="hhg-item">
-                <i class="fa-solid fa-location-dot hhg-item-icon"></i>
-                <span class="hhg-item-val">${city}</span>
-            </div>
-            <div class="hhg-sep"></div>
-            <div class="hhg-item">
-                <div class="hhg-item-row">
-                    <i class="fa-solid ${icon} hhg-item-icon"></i>
-                    <span class="hhg-item-val">${Math.round(tempValue)}°</span>
-                </div>
-                <span class="hhg-item-sub">${weatherData.conditionText}</span>
-            </div>
-            <div class="hhg-sep"></div>
-            <div class="hhg-item">
-                <span class="hhg-item-val hhg-item-val--lg">${dayNum}</span>
-                <span class="hhg-item-sub">${dayName}</span>
-            </div>
-            <div class="hhg-sep"></div>
-            <div class="hhg-item">
-                <span class="hhg-item-val" id="hero-time">${formatTime(now)}</span>
-            </div>`;
-    } else {
-        widgetInner = `
-            <div class="hhg-item">
-                <span class="hhg-item-val hhg-item-val--lg">${dayNum}</span>
-                <span class="hhg-item-sub">${dayName}</span>
-            </div>
-            <div class="hhg-sep"></div>
-            <div class="hhg-item">
-                <span class="hhg-item-val" id="hero-time">${formatTime(now)}</span>
-            </div>`;
-    }
-
-    heroEl.innerHTML = `
-        ${slidesHTML}
-        <div class="home-hero-overlay"></div>
-        <div class="home-hero-content">
-            ${plantLabelHTML}
-            ${dotsHTML}
-            <div class="hhg">${widgetInner}</div>
-        </div>
-    `;
-
-    // Live clock
-    const timeEl  = heroEl.querySelector('#hero-time');
-    const clockId = setInterval(() => {
-        if (timeEl && heroEl.isConnected) timeEl.textContent = formatTime(new Date());
-        else clearInterval(clockId);
-    }, 60000);
-
-    if (pool.length <= 1) return null;
-
-    // Photo cycling
-    let idx = 0;
-    const slides = heroEl.querySelectorAll('.home-hero-slide');
-    const dots   = heroEl.querySelectorAll('.home-hero-dot');
-    const label  = heroEl.querySelector('#hero-plant-label');
-
-    const intervalId = setInterval(() => {
-        slides[idx].classList.remove('is-active');
-        dots[idx]?.classList.remove('is-active');
-        idx = (idx + 1) % pool.length;
-        slides[idx].classList.add('is-active');
-        dots[idx]?.classList.add('is-active');
-
-        if (label) {
-            label.style.opacity = '0';
-            setTimeout(() => {
-                label.querySelector('.hero-pl-name').textContent  = pool[idx].plantName || '';
-                label.querySelector('.hero-pl-date').textContent  = formatHeroDate(pool[idx].timestamp);
-                label.style.opacity = '1';
-            }, 500);
-        }
-    }, 15000);
-
-    return intervalId;
-}
-
+// ── Main render ───────────────────────────────────────────────────────────────
 export async function renderHomePage(container, profile, weatherData, authUser) {
-    // Clear any previous cycling interval
-    if (container._heroInterval) {
-        clearInterval(container._heroInterval);
-        container._heroInterval = null;
-    }
-
     let plants = [];
     if (authUser) {
         try { plants = await getMyPlants(authUser.uid); }
         catch (e) { console.error(e); }
     }
 
-    const tempUnit = profile.temperatureUnit || 'C';
+    // Load photos for collage
+    let galleryPhotos = [];
+    if (authUser) {
+        try { galleryPhotos = await getGalleryPhotos(authUser.uid); }
+        catch (e) { console.error(e); }
+    }
+
+    const tempUnit    = profile.temperatureUnit || 'C';
+    const displayName = profile.displayName || profile.email?.split('@')[0] || '';
 
     // ── Task classification ───────────────────────────────────────────────────
     const todayMidnight = new Date();
@@ -212,24 +175,20 @@ export async function renderHomePage(container, profile, weatherData, authUser) 
     });
 
     const fertilizePlants = plants.filter(plant => {
-        const last  = plant.lastFertilized ? new Date(plant.lastFertilized) : null;
-        const added = plant.dateAdded      ? new Date(plant.dateAdded)      : null;
-        const ref   = last || added;
-        if (!ref) return false;
-        return (Date.now() - ref.getTime()) / 86400000 >= FERTILIZE_DAYS;
+        const ref = plant.lastFertilized ? new Date(plant.lastFertilized)
+                  : plant.dateAdded      ? new Date(plant.dateAdded) : null;
+        return ref && (Date.now() - ref.getTime()) / 86400000 >= FERTILIZE_DAYS;
     });
 
     const journalPlants = plants.filter(plant => {
-        const last  = plant.lastJournalEntry ? new Date(plant.lastJournalEntry) : null;
-        const added = plant.dateAdded        ? new Date(plant.dateAdded)        : null;
-        const ref   = last || added;
-        if (!ref) return false;
-        return (Date.now() - ref.getTime()) / 86400000 >= JOURNAL_DAYS;
+        const ref = plant.lastJournalEntry ? new Date(plant.lastJournalEntry)
+                  : plant.dateAdded        ? new Date(plant.dateAdded) : null;
+        return ref && (Date.now() - ref.getTime()) / 86400000 >= JOURNAL_DAYS;
     });
 
     const totalTasks = waterPlants.length + fertilizePlants.length + journalPlants.length;
 
-    // ── Build task HTML ───────────────────────────────────────────────────────
+    // ── Task HTML ─────────────────────────────────────────────────────────────
     let tasksHTML = '';
     if (plants.length === 0) {
         tasksHTML = `
@@ -261,32 +220,23 @@ export async function renderHomePage(container, profile, weatherData, authUser) 
         `</div>`;
     }
 
-    // ── Build hero photo pool (before render so we know whether to show hero) ──
-    let heroPhotos = [];
-    if (authUser) {
-        try {
-            heroPhotos = await getGalleryPhotos(authUser.uid);
-        } catch (e) { console.error(e); }
-
-        // Fallback: use existing plant profilePicURLs
-        if (heroPhotos.length === 0) {
-            heroPhotos = plants
-                .filter(p => p.profilePicURL)
-                .map(p => ({
-                    plantId:   p.id,
-                    plantName: p.customName || p.common_name || 'My Plant',
-                    photoURL:  p.profilePicURL,
-                    timestamp: p.dateAdded || new Date().toISOString(),
-                }));
-        }
-    }
-
-    const showHero = heroPhotos.length > 0;
-
-    // ── Render shell ──────────────────────────────────────────────────────────
+    // ── Render ────────────────────────────────────────────────────────────────
     container.innerHTML = `
         <div class="home-wrapper">
-            ${showHero ? `<div id="home-hero" class="home-hero"></div>` : ''}
+
+            <div class="hw-header">
+                <div class="hw-header-left">
+                    ${logoSVG('hw-logo')}
+                    <span class="hw-greeting">${getGreeting(displayName)}</span>
+                </div>
+            </div>
+
+            <div class="hw-grid">
+                ${weatherWidgetHTML(weatherData, tempUnit)}
+                ${collageWidgetHTML(galleryPhotos, plants)}
+                ${careTipHTML()}
+                ${addPlantBtnHTML()}
+            </div>
 
             <div class="home-tasks-wrap">
                 <div class="home-section-title">
@@ -296,18 +246,8 @@ export async function renderHomePage(container, profile, weatherData, authUser) 
                 ${tasksHTML}
             </div>
 
-            <a href="#search" class="floating-add-btn">
-                <i class="fa-solid fa-plus"></i>
-            </a>
         </div>
     `;
-
-    // ── Init hero ─────────────────────────────────────────────────────────────
-    const heroEl = container.querySelector('#home-hero');
-    if (heroEl) {
-        const intervalId = initHero(heroEl, heroPhotos, weatherData, tempUnit);
-        if (intervalId) container._heroInterval = intervalId;
-    }
 
     // ── Event handlers ────────────────────────────────────────────────────────
     container.querySelector('#set-location-prompt')?.addEventListener('click', (e) => {

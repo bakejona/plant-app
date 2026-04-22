@@ -359,13 +359,16 @@ function renderAuthForm(container) {
             if (isLogin) {
                 await signInWithEmailAndPassword(auth, email, password);
             } else {
+                // Set flag synchronously BEFORE any await so onAuthStateChanged
+                // always sees it set when it fires during the async operations below
+                _pendingSetup = true;
                 const cred = await createUserWithEmailAndPassword(auth, email, password);
                 await setDoc(doc(db, 'users', cred.user.uid), {
                     email, joined: new Date().toISOString(), temperatureUnit: 'F',
                 });
-                _pendingSetup = true;
             }
         } catch (error) {
+            _pendingSetup = false;
             const code = error.code || '';
             const isEmailErr    = code.includes('email') || code.includes('user');
             const isPasswordErr = code.includes('password') || code.includes('credential');

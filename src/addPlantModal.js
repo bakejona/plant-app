@@ -1,36 +1,59 @@
 // src/addPlantModal.js
 
 import { addPlantToUser } from './plantService.js';
+import { logoSVG } from './logoSVG.js';
+
+// Compress an image File to a base64 JPEG (max 1600px on longest side, quality 0.92)
+function compressImage(file, maxPx = 1600, quality = 0.92) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const scale = Math.min(maxPx / img.width, maxPx / img.height, 1);
+                const canvas = document.createElement('canvas');
+                canvas.width  = Math.round(img.width  * scale);
+                canvas.height = Math.round(img.height * scale);
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
 
 export function openAddPlantModal(plant, authUser) {
     // 1. Create Modal Elements
     const modalOverlay = document.createElement('div');
     modalOverlay.className = 'modal-overlay';
     
-    const defaultImage = plant.default_image?.thumbnail || 'https://via.placeholder.com/150/41b883/FFFFFF?text=P';
-    let finalImage = defaultImage;
+    const plantName = plant.name || plant.common_name || 'Plant';
+    let finalImage = '';
     let selectedDateOffset = 0; // Default to Today (0 days ago)
 
     modalOverlay.innerHTML = `
         <div class="modal-card">
             <button class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
-            
+
             <div class="modal-header">
                 <h2>Add Plant</h2>
-                <p>${plant.common_name}</p>
+                <p>${plantName}</p>
             </div>
 
             <div class="image-upload-wrapper">
-                <div class="image-preview" style="background-image: url('${defaultImage}')"></div>
+                <div class="image-preview image-preview--empty">${logoSVG()}</div>
                 <label class="upload-btn-label">
-                    <i class="fa-solid fa-camera"></i> Change Photo
+                    <i class="fa-solid fa-camera"></i> Add Photo
                     <input type="file" id="modal-image-input" accept="image/*">
                 </label>
             </div>
 
             <div class="modal-form-group">
                 <label>Nickname</label>
-                <input type="text" id="modal-nickname" placeholder="${plant.common_name}" value="${plant.common_name}">
+                <input type="text" id="modal-nickname" placeholder="${plantName}" value="${plantName}">
             </div>
 
             <div class="modal-form-group">
@@ -73,21 +96,23 @@ export function openAddPlantModal(plant, authUser) {
     });
 
     // 2. Handle Image Upload
-    imageInput.addEventListener('change', (e) => {
+    imageInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                finalImage = e.target.result;
-                preview.style.backgroundImage = `url('${finalImage}')`;
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+        preview.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        try {
+            finalImage = await compressImage(file);
+            preview.innerHTML = '';
+            preview.classList.remove('image-preview--empty');
+            preview.style.backgroundImage = `url('${finalImage}')`;
+        } catch {
+            preview.innerHTML = logoSVG();
         }
     });
 
     // 3. Submit
     submitBtn.addEventListener('click', async () => {
-        const nickname = document.getElementById('modal-nickname').value || plant.common_name;
+        const nickname = document.getElementById('modal-nickname').value || plantName;
 
         // Calculate Date based on offset
         const dateCalc = new Date();
@@ -101,7 +126,7 @@ export function openAddPlantModal(plant, authUser) {
         try {
             await addPlantToUser(authUser.uid, plant, {
                 customName: nickname,
-                customImage: finalImage,
+                customImage: finalImage || '',
                 lastWatered: lastWateredStr
             });
 

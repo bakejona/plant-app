@@ -3,17 +3,18 @@
 // ----------------------------------------------------
 // 1. FONT IMPORTS & VARIABLES
 // ----------------------------------------------------
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Roboto:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Josefin+Sans:wght@700&family=Roboto:wght@400;700&display=swap');
 
 $font-header: 'Outfit', sans-serif;
 $font-body: 'Roboto', sans-serif;
 
 // Theme Palette
-$color-green-accent: #def39b; // Lime/Moss
-$color-dark-bg: #194538;      // Deep Jungle Green
-$color-content-bg: #163c31;   // Slate Green
-$color-text-light: rgba(255, 255, 255, 0.9); 
-$color-error: #f44336;       
+$color-green-accent: #a8e063; // Vibrant Lime
+$color-dark-bg: #0a1a10;      // Site background — deepest
+$color-content-bg: #14291e;   // Cards & nav — dark green
+$color-card-highlight: #1a3528; // Slightly lighter card / inner elements
+$color-text-light: rgba(255, 255, 255, 0.92);
+$color-error: #f44336;
 
 // ----------------------------------------------------
 // 2. GLOBAL BASE STYLES
@@ -33,7 +34,7 @@ h1, h2, h3 {
     margin-top: 0;
 }
 p, span, label {
-    font-family: $font-body;
+    font-family: $font-header;
 }
 
 a {
@@ -108,7 +109,13 @@ input[type="password"],
     a.nav-link {
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         width: 100%; color: $color-text-light; opacity: 0.6; text-decoration: none;
-        i { font-size: 1.5em; margin-bottom: 3px; }
+        i, .app-logo-icon { font-size: 1.5em; margin-bottom: 3px; }
+        .app-logo-icon {
+            stroke: currentColor;
+            stroke-width: 14px;
+            paint-order: stroke fill;
+            stroke-linejoin: round;
+        }
         &.active { color: $color-green-accent; opacity: 1; }
     }
 }
@@ -135,44 +142,727 @@ input[type="password"],
 }
 
 // ----------------------------------------------------
-// 5. AUTHENTICATION PAGE STYLES
+// 5. ONBOARDING CAROUSEL
 // ----------------------------------------------------
 
-.auth-wrapper {
-    max-width: 400px; margin: 0 auto; padding: 20px;
-    text-align: center; min-height: 100vh;
-    display: flex; flex-direction: column; justify-content: center;
+.ob-wrapper {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: $color-dark-bg;
+    z-index: 500;
+}
 
-    .auth-header { color: $color-green-accent; margin-bottom: 10px; font-size: 2.5rem; }
-    .auth-status { margin-bottom: 30px; font-weight: 500; color: rgba(255,255,255,0.7); }
+.ob-track {
+    display: flex;
+    flex: 1;
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+.ob-slide {
+    flex-shrink: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+// ── Upper photo area ──────────────────────────────────────────────────────────
+.ob-upper {
+    flex: 1 0 55%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.ob-upper--photo {
+    background-size: cover;
+    background-position: center top;
+
+    @media (min-width: 600px) {
+        background-position: center center;
+    }
+}
+
+.ob-slide--2 .ob-upper {
+    background-size: cover;
+    background-position: 20% center;
+    background-repeat: no-repeat;
+}
+
+.ob-upper-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, rgba(0,0,0,0.25) 0%, rgba(10,26,16,0.65) 100%);
+    pointer-events: none;
+}
+
+// ── Mockup cards (floating UI previews) ───────────────────────────────────────
+.ob-mockup {
+    position: absolute;
+    z-index: 1;
+    background: rgba(10, 26, 16, 0.55);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: none;
+    border-radius: 18px;
+    padding: 14px 16px;
+    color: $color-text-light;
+    font-size: 0.78rem;
+}
+
+.ob-mockup--plant {
+    bottom: calc(45% + 34px);
+    left: 20px;
+    width: 180px;
+    font-size: 0.73rem;
+    z-index: 10;
+}
+
+// ── Slide 1: Plant info card ───────────────────────────────────────────────────
+.ob-mp-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 0;
+}
+
+.ob-mp-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a4d28 0%, #2a6a38 100%);
+    flex-shrink: 0;
+    border: 1.5px solid rgba(168,224,99,0.3);
+}
+
+.ob-mp-title {
+    .ob-mp-name  { font-weight: 700; font-size: 0.88rem; color: $color-text-light; }
+    .ob-mp-sci   { font-size: 0.72rem; color: rgba(255,255,255,0.45); font-style: italic; margin-top: 1px; }
+}
+
+.ob-mp-badge {
+    display: inline-block;
+    margin-top: 5px;
+    background: rgba(168,224,99,0.15);
+    color: $color-green-accent;
+    border: 1px solid rgba(168,224,99,0.3);
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 8px;
+}
+
+.ob-mp-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.ob-mp-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    padding: 7px 4px;
+    i { font-size: 0.85rem; }
+    span { font-size: 0.65rem; color: rgba(255,255,255,0.6); }
+}
+
+.ob-mp-chips {
+    display: flex;
+    gap: 8px;
+}
+
+.ob-mp-chip {
+    flex: 1;
+    text-align: center;
+    background: rgba(168,224,99,0.12);
+    border: 1px solid rgba(168,224,99,0.3);
+    color: $color-green-accent;
+    border-radius: 20px;
+    padding: 5px 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    i { margin-right: 4px; }
+
+    &--journal {
+        background: rgba(255,255,255,0.06);
+        border-color: rgba(255,255,255,0.15);
+        color: rgba(255,255,255,0.7);
+    }
+}
+
+// ── Slide 2: Task list card ────────────────────────────────────────────────────
+.ob-mockup--tasks {
+    top: 16px;
+    right: 12px;
+    width: 172px;
+    font-size: 0.68rem;
+    padding: 10px 11px;
+    z-index: 10;
+}
+
+.ob-mt-greeting {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: $color-text-light;
+    line-height: 1.2;
+}
+
+.ob-mt-count {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 10px;
+}
+
+.ob-mt-task {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    padding: 6px 8px;
+    margin-bottom: 5px;
+    &:last-child { margin-bottom: 0; }
+
+    &--done {
+        opacity: 1;
+    }
+
+    &--faded {
+        opacity: 0.45;
+    }
+}
+
+.ob-mt-task-img {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a4d28, #2a6a38);
+    flex-shrink: 0;
+    border: 1px solid rgba(168,224,99,0.2);
+}
+
+.ob-mt-task-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ob-mt-task-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: $color-text-light;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ob-mt-task-label {
+    font-size: 0.62rem;
+    color: rgba(255,255,255,0.45);
+    margin-top: 1px;
+}
+
+.ob-mt-task-circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(168,224,99,0.4);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &--done {
+        background: $color-green-accent;
+        border-color: $color-green-accent;
+        color: $color-dark-bg;
+        font-size: 0.55rem;
+    }
+}
+
+// ── Slide 3: Sensor tiles ─────────────────────────────────────────────────────
+.ob-sensor-wrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 45%;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 14px;
+    pointer-events: none;
+}
+
+.ob-sensor-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ob-sensor-card {
+    background: rgba(10, 26, 16, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 14px;
+    padding: clamp(7px, 2vw, 12px) clamp(9px, 2.5vw, 14px);
+    width: clamp(62px, 17vw, 90px);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.ob-sc-icon {
+    color: $color-green-accent;
+    font-size: clamp(0.65rem, 2vw, 0.85rem);
+    margin-bottom: 3px;
+}
+
+.ob-sc-val {
+    font-size: clamp(0.85rem, 3vw, 1.15rem);
+    font-weight: 700;
+    color: $color-text-light;
+    line-height: 1;
+    small { font-size: 0.6em; color: rgba(255,255,255,0.5); margin-left: 1px; }
+}
+
+.ob-sc-lbl {
+    font-size: clamp(0.55rem, 1.5vw, 0.7rem);
+    color: rgba(255,255,255,0.45);
+    margin: 2px 0 5px;
+}
+
+.ob-sc-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.ob-sc-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: $color-green-accent;
+    opacity: 0.75;
+}
+
+// ── Lower text area ───────────────────────────────────────────────────────────
+.ob-lower {
+    background: $color-dark-bg;
+    padding: 28px 28px 0;
+    flex-shrink: 0;
+    border-radius: 22px 22px 0 0;
+    margin-top: -22px;
+    position: relative;
+    z-index: 2;
+}
+
+.ob-tag {
+    display: inline-block;
+    background: rgba($color-green-accent, 0.15);
+    color: $color-green-accent;
+    border: 1px solid rgba($color-green-accent, 0.35);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    letter-spacing: 0.04em;
+    margin-bottom: 14px;
+}
+
+.ob-title {
+    font-family: $font-header;
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1.15;
+    margin: 0 0 10px;
+    color: $color-text-light;
+}
+
+.ob-desc {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.55;
+    margin: 0 0 20px;
+}
+
+.ob-cta-btn {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 16px;
+    font-size: 1rem;
+}
+
+// ── Footer nav ────────────────────────────────────────────────────────────────
+.ob-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px 32px;
+    background: $color-dark-bg;
+}
+
+.ob-skip-btn, .ob-next-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    font-size: 0.95rem;
+    font-family: $font-body;
+    cursor: pointer;
+    padding: 6px 0;
+    min-width: 50px;
+
+    &:hover { color: $color-green-accent; }
+}
+
+.ob-next-btn { color: $color-green-accent; font-weight: 700; text-align: right; }
+
+.ob-dots {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+}
+
+.ob-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    transition: all 0.25s ease;
+
+    &--active {
+        background: $color-green-accent;
+        width: 20px;
+        border-radius: 4px;
+    }
+}
+
+// ── Tablet (600px+) ───────────────────────────────────────────────────────────
+@media (min-width: 600px) {
+    .ob-upper--photo { background-position: center center; }
+
+    .ob-lower  { padding: 28px 36px 0; }
+    .ob-title  { font-size: 2.2rem; }
+    .ob-desc   { font-size: 0.95rem; }
+
+    .ob-mockup--plant {
+        width: 210px;
+        font-size: 0.82rem;
+        padding: 14px 16px;
+        left: 28px;
+    }
+
+    .ob-mockup--tasks {
+        width: 192px;
+        font-size: 0.78rem;
+        padding: 12px 13px;
+        top: 22px;
+        right: 24px;
+    }
+
+    .ob-sensor-wrap    { padding: 26px 20px; }
+    .ob-mp-avatar      { width: 40px; height: 40px; }
+    .ob-mt-task-circle { width: 22px; height: 22px; }
+}
+
+// ── Desktop (1024px+) ─────────────────────────────────────────────────────────
+@media (min-width: 1024px) {
+    .ob-lower  { padding: 40px 56px 0; }
+    .ob-title  { font-size: 3rem; }
+    .ob-desc   { font-size: 1.1rem; }
+    .ob-tag    { font-size: 0.82rem; }
+
+    .ob-mockup--plant {
+        width: 260px;
+        font-size: 0.95rem;
+        padding: 18px 20px;
+        left: 40px;
+        bottom: calc(45% + 42px);
+    }
+
+    .ob-mockup--tasks {
+        width: 230px;
+        font-size: 0.86rem;
+        padding: 15px 16px;
+        top: 32px;
+        right: 40px;
+    }
+
+    .ob-sensor-wrap    { padding: 40px 32px; }
+    .ob-mp-avatar      { width: 50px; height: 50px; }
+    .ob-mt-task-circle { width: 28px; height: 28px; }
+    .ob-mt-task-img    { width: 32px; height: 32px; }
+    .ob-cta-btn        { padding: 18px; font-size: 1.05rem; }
+}
+
+// ----------------------------------------------------
+// 5b. AUTHENTICATION FORM
+// ----------------------------------------------------
+
+@keyframes auth-slide-up {
+    from { opacity: 0; transform: translateY(32px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.auth-wrapper {
+    max-width: 100%;
+    margin: 0;
+    padding: 0 clamp(14px, 5vw, 24px);
+    box-sizing: border-box;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url('/pp-auth-bg.jpeg') center center / cover no-repeat;
+        filter: blur(6px);
+        transform: scale(1.03); // prevent blur edge bleed
+        z-index: 0;
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(10, 26, 16, 0.55);
+        z-index: 0;
+    }
+
+    .auth-form-container {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 420px;
+    }
+}
+
+.auth-slide-up {
+    animation: auth-slide-up 0.5s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+.auth-logo-bottom {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+
+    .auth-logo-icon {
+        width: 44px;
+        height: 44px;
+        color: $color-green-accent;
+        filter: none;
+    }
 }
 
 .auth-form-container {
-    padding: 30px 20px;
-    background-color: $color-content-bg; 
-    border-radius: 16px;
-    // REMOVED SHADOW
-    
-    h2 { margin-bottom: 20px; }
-    .auth-input { margin-bottom: 15px; }
-    
-    .forgot-password-container {
-        text-align: right; margin-top: -10px; margin-bottom: 20px;
-        .auth-link { font-family: $font-header; font-size: 0.9em; color: $color-green-accent; }
+    padding: 28px 24px;
+    background-color: $color-content-bg;
+    border-radius: 20px;
+
+    .auth-input { margin-bottom: 14px; }
+
+    @media (max-width: 390px) {
+        padding: 22px 18px;
     }
 
-    .auth-button {
-        width: 100%; margin: 10px 0; padding: 12px; font-size: 1.1em;
-        &.google-button {
-            background-color: $color-dark-bg; 
-            color: $color-text-light;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
+    @media (max-width: 320px) {
+        padding: 18px 14px;
     }
 }
 
+.auth-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.auth-title-icon-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: $color-green-accent;
+    color: $color-dark-bg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    flex-shrink: 0;
+}
+
+@keyframes auth-header-out {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-6px); }
+}
+
+@keyframes auth-header-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.auth-header-out { animation: auth-header-out 0.18s ease forwards; }
+.auth-header-in  { animation: auth-header-in  0.22s ease forwards; }
+
+.auth-title-left {
+    text-align: left;
+    font-size: 1.6rem;
+    margin: 0;
+}
+
+.auth-subtext {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.5);
+    margin: 0 0 20px;
+    line-height: 1.4;
+}
+
+.social-auth-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 13px 16px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: $font-body;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+    margin-bottom: 10px;
+
+    &:hover { opacity: 0.85; }
+
+    &--google {
+        background: #fff;
+        color: #1a1a1a;
+        border: none;
+
+        .social-icon-g { width: 20px; height: 20px; flex-shrink: 0; }
+    }
+
+    &--apple {
+        background: #1a1a1a;
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.15);
+
+        i { font-size: 1.2rem; }
+    }
+}
+
+@keyframes auth-shake {
+    0%, 100% { transform: translateX(0); }
+    15%       { transform: translateX(-7px); }
+    30%       { transform: translateX(7px); }
+    45%       { transform: translateX(-5px); }
+    60%       { transform: translateX(5px); }
+    75%       { transform: translateX(-3px); }
+    90%       { transform: translateX(3px); }
+}
+
+@keyframes auth-error-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.auth-shake { animation: auth-shake 0.48s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+
+.auth-input--error {
+    border-color: #e76f51 !important;
+    background-color: rgba(231, 111, 81, 0.06) !important;
+}
+
+.auth-or-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+
+    &::before, &::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(255,255,255,0.1);
+    }
+
+    span {
+        font-size: 0.8rem;
+        color: rgba(255,255,255,0.35);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+}
+
+.auth-forgot {
+    display: block;
+    text-align: right;
+    font-size: 0.82rem;
+    color: $color-green-accent;
+    margin: -6px 0 14px;
+    text-decoration: none;
+
+    &:hover { opacity: 0.75; }
+}
+
+.auth-button {
+    width: 100%;
+    margin-top: 4px;
+    padding: 14px;
+    font-size: 1rem;
+}
+
+.auth-footer {
+    margin-top: 20px;
+    font-size: 0.88em;
+    text-align: center;
+    color: rgba(255,255,255,0.5);
+
+    a { color: $color-green-accent; margin-left: 5px; text-decoration: none; font-weight: 600; }
+}
+
+.auth-error-message {
+    background: rgba(231, 111, 81, 0.12);
+    border: 1px solid rgba(231, 111, 81, 0.4);
+    color: #e76f51;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    margin-bottom: 14px;
+    display: none;
+    gap: 8px;
+    align-items: center;
+    animation: auth-error-in 0.2s ease-out;
+
+    i { flex-shrink: 0; }
+
+    &--success {
+        background: rgba(168, 224, 99, 0.1);
+        border-color: rgba(168, 224, 99, 0.4);
+        color: $color-green-accent;
+    }
+}
+
+.auth-header { color: $color-green-accent; margin-bottom: 10px; font-size: 1.9rem; }
 .auth-separator { border-color: rgba(255,255,255,0.1); margin: 25px 0; }
-.auth-footer { margin-top: 30px; font-size: 0.9em; }
 
 // ----------------------------------------------------
 // 6. SEARCH PAGE & LIST STYLES
@@ -183,36 +873,169 @@ input[type="password"],
     max-width: 600px; margin: 0 auto; 
 }
 
-.search-header { margin-bottom: 20px; }
+.search-header { margin-bottom: 12px; }
 
-// ⬅️ UPDATED: Search Bar Outline Style
+// ── Search bar row (input + filter button) ────────────────────────────────────
+.search-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+}
+
 .search-bar-container {
-    position: relative; margin-bottom: 15px; width: 100%;
-    
+    position: relative;
+    flex: 1;
+    min-width: 0;
+
     .search-icon {
         position: absolute; left: 15px; top: 50%;
         transform: translateY(-50%);
-        color: $color-green-accent; // Icon Color
+        color: $color-green-accent;
     }
-    
+
     input {
-        width: 100%; padding: 12px 12px 12px 45px; 
+        width: 100%; padding: 12px 12px 12px 42px;
         border-radius: 12px;
-        background-color: transparent; // Transparent BG
-        border: 2px solid $color-green-accent; // Accent Border
-        color: $color-green-accent; // Text Color
+        background-color: transparent;
+        border: 2px solid $color-green-accent;
+        color: $color-green-accent;
         font-size: 1rem;
         box-sizing: border-box;
-        
-        &::placeholder {
-            color: rgba(222, 243, 155, 0.6); // Subtle accent color for placeholder
-        }
-        
-        &:focus {
-            outline: none;
-            background-color: rgba(222, 243, 155, 0.05); // Slight tint on focus
-        }
+
+        &::placeholder { color: rgba(222, 243, 155, 0.6); }
+        &:focus { outline: none; background-color: rgba(222, 243, 155, 0.05); }
     }
+}
+
+// ── Filter button (green circle) ──────────────────────────────────────────────
+.filter-btn {
+    flex-shrink: 0;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background-color: $color-green-accent;
+    color: $color-dark-bg;
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1em;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.15s;
+    padding: 0;
+
+    &:hover { background-color: lighten($color-green-accent, 8%); }
+    &:active { transform: scale(0.94); }
+    &--open { background-color: $color-dark-bg; color: $color-green-accent; border: 2px solid $color-green-accent; }
+}
+
+.filter-badge {
+    position: absolute; top: -3px; right: -3px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background-color: #e76f51;
+    color: #fff;
+    font-size: 0.6em;
+    font-weight: 700;
+    align-items: center; justify-content: center;
+    border: 2px solid $color-dark-bg;
+}
+
+// ── Filter panel ──────────────────────────────────────────────────────────────
+.filter-panel {
+    background-color: $color-content-bg;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: 10px;
+    animation: fadeIn 0.2s ease;
+}
+
+.filter-group {
+    margin-bottom: 14px;
+    &:last-of-type { margin-bottom: 12px; }
+}
+
+.filter-group-label {
+    font-size: 0.72em;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: rgba(255,255,255,0.45);
+    margin: 0 0 8px;
+}
+
+.filter-group-pills {
+    display: flex; flex-wrap: wrap; gap: 7px;
+}
+
+.filter-pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: transparent;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.82em;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+    &:hover { border-color: rgba($color-green-accent, 0.5); color: $color-text-light; }
+    &--active {
+        background-color: rgba($color-green-accent, 0.15);
+        border-color: $color-green-accent;
+        color: $color-green-accent;
+        font-weight: 700;
+    }
+}
+
+.filter-actions-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.filter-clear-btn {
+    flex: 1;
+    padding: 9px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: transparent;
+    color: rgba(255,255,255,0.35);
+    font-size: 0.82em;
+    cursor: pointer;
+    &:hover { color: $color-text-light; border-color: rgba(255,255,255,0.25); }
+}
+
+.filter-show-btn {
+    flex: 2;
+    padding: 9px 16px;
+    border-radius: 10px;
+    border: none;
+    background-color: $color-green-accent;
+    color: $color-dark-bg;
+    font-size: 0.85em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    &:hover { background-color: lighten($color-green-accent, 8%); }
+}
+
+// ── Quiz pill (retake button above results) ───────────────────────────────────
+.quiz-pill-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0 2px;
+    padding: 9px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba($color-green-accent, 0.3);
+    background: rgba($color-green-accent, 0.07);
+    color: $color-green-accent;
+    font-size: 0.85em;
+    font-weight: 600;
+    cursor: pointer;
+    width: fit-content;
+    transition: background 0.15s;
+
+    &:hover { background: rgba($color-green-accent, 0.14); }
 }
 
 .filters-scroll {
@@ -318,8 +1141,9 @@ input[type="password"],
 
 .location-input-group {
     display: flex; align-items: center; justify-content: space-between; margin-top: 10px;
-    .location-input-field { width: 60%; padding: 10px; }
-    .location-buttons { display: flex; width: 38%; gap: 8px; }
+    flex-wrap: wrap; gap: 8px;
+    .location-input-field { flex: 1; min-width: 0; padding: 10px; }
+    .location-buttons { display: flex; gap: 8px; flex-shrink: 0; }
     .location-arrow-button { 
         width: 45px; height: 45px; margin: 0; font-size: 1.2em; 
         background-color: $color-dark-bg; color: $color-green-accent;
@@ -372,7 +1196,97 @@ input[type="password"],
 .detail-header-image {
     width: 100%; height: 300px; background-size: cover; background-position: center;
     position: relative; border-radius: 0 0 24px 24px;
-    // REMOVED SHADOW
+    overflow: visible;
+    &--empty {
+        background-color: $color-card-highlight;
+        display: flex; align-items: center; justify-content: center;
+    }
+}
+
+.detail-add-fab {
+    position: absolute;
+    bottom: -24px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background-color: $color-green-accent;
+    color: $color-dark-bg;
+    border: none;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    z-index: 10;
+
+    &:hover {
+        transform: scale(1.08);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    }
+}
+.detail-header-icon {
+    font-size: 4em; color: rgba($color-green-accent, 0.4);
+    i, .app-logo-icon { display: block; }
+}
+
+.similar-plants-section {
+    margin-top: 32px;
+}
+.similar-plants-title {
+    font-size: 1rem;
+    font-weight: 700;
+    opacity: 0.6;
+    margin: 0 0 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.similar-plants-row {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+}
+.similar-plant-card {
+    flex-shrink: 0;
+    width: 100px;
+    text-align: center;
+    cursor: pointer;
+    &:hover .similar-plant-icon { opacity: 0.8; }
+}
+.similar-plant-icon {
+    width: 100%;
+    height: 80px;
+    border-radius: 14px;
+    background: $color-card-highlight;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2em;
+    color: rgba($color-green-accent, 0.35);
+    margin-bottom: 6px;
+}
+.similar-plant-name {
+    font-size: 0.78em;
+    font-weight: 700;
+    margin: 0 0 2px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.similar-plant-sci {
+    font-size: 0.68em;
+    opacity: 0.4;
+    font-style: italic;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .nav-back-btn {
     position: absolute; top: 20px; left: 20px; width: 45px; height: 45px;
@@ -381,7 +1295,21 @@ input[type="password"],
     backdrop-filter: blur(4px); padding: 0;
     &:hover { background-color: rgba(0, 0, 0, 0.7); }
 }
-.detail-content { padding: 25px; }
+.detail-content { padding: 48px 25px 25px; }
+
+.divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    margin: 20px 0;
+}
+
+.detail-info-card { margin-top: 0; }
+
+.detail-info-heading {
+    color: $color-green-accent;
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+}
 .detail-title-section {
     h1 { margin: 0 0 5px 0; font-size: 2em; line-height: 1.1; }
     .scientific-name { font-style: italic; color: $color-green-accent; margin: 0 0 15px 0; }
@@ -389,9 +1317,12 @@ input[type="password"],
 .tags-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
 .tag-chip {
     padding: 6px 12px; border-radius: 20px; background-color: $color-dark-bg; font-size: 0.85em;
-    display: flex; align-items: center; gap: 6px;
-    &.safe { background-color: rgba(222, 243, 155, 0.15); color: $color-green-accent; }
-    &.warning { background-color: rgba(244, 67, 54, 0.15); color: $color-error; }
+    display: flex; align-items: center; gap: 6px; white-space: nowrap;
+    &.safe          { background-color: rgba(222, 243, 155, 0.15); color: $color-green-accent; }
+    &.warning       { background-color: rgba(244, 67, 54, 0.15);   color: $color-error; }
+    &.tag-chip--care  { background-color: rgba(168, 224, 99, 0.12);  color: #a8e063; }
+    &.tag-chip--sun   { background-color: rgba(255, 213, 79, 0.12);  color: #ffd54f; }
+    &.tag-chip--water { background-color: rgba(100, 181, 246, 0.12); color: #64b5f6; }
 }
 .stats-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;
@@ -402,10 +1333,7 @@ input[type="password"],
     .stat-icon { font-size: 1.8em; color: $color-green-accent; margin-bottom: 10px; }
     .stat-label { font-size: 0.75em; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
     .stat-value { font-weight: 700; font-size: 1.1em; margin-top: 4px; }
-}
-.detail-description {
-    h3 { color: $color-green-accent; margin-bottom: 10px; }
-    p { line-height: 1.6; color: rgba(255, 255, 255, 0.8); }
+    .stat-sub { font-size: 0.72em; color: #888; margin-top: 3px; }
 }
 
 // ----------------------------------------------------
@@ -463,121 +1391,146 @@ input[type="password"],
     }
 }
 
-// ⬅️ THE BUTTON CONTAINER (The "Scoop")
+// ── Button corner "scoop" cutout ──────────────────────────────────────────────
+// Container sits flush at bottom-right of the card (overflow:hidden clips it).
+$_scoop-btn:  56px;   // button diameter
+$_scoop-gap:  16px;   // gap between button and concave edge
+$_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
+
 .quiz-btn-container {
     position: absolute;
-    bottom: 0;
-    right: 0;
+    bottom: 0; right: 0;
     z-index: 10;
-    width: 80px;  // Button size (60) + Padding (20)
-    height: 80px;
-    background-color: $color-dark-bg; // Matches Page BG to create "cutout" look
-    border-top-left-radius: 50%; // Main curve
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    // SMOOTHING CORNER 1 (Top)
+    width:  $_scoop-size;
+    height: $_scoop-size;
+    background-color: $color-dark-bg;
+    border-top-left-radius: 50%;
+    border-bottom-right-radius: 24px; // match card border-radius to remove corner line
+    display: flex; align-items: center; justify-content: center;
+
+    // Smooth concave transition above the container
     &::before {
         content: '';
         position: absolute;
-        top: -20px; // Move up
-        right: 0;
-        width: 20px;
-        height: 20px;
-        // This shadow creates the inverse curve filling the gap
+        top: -18px; right: 0;
+        width: 18px; height: 18px;
         background: transparent;
         border-bottom-right-radius: 50%;
-        box-shadow: 10px 10px 0 $color-dark-bg; 
+        box-shadow: 9px 9px 0 $color-dark-bg;
     }
-    
-    // SMOOTHING CORNER 2 (Left)
+
+    // Smooth concave transition to the left of the container
     &::after {
         content: '';
         position: absolute;
-        bottom: 0;
-        left: -20px; // Move left
-        width: 20px;
-        height: 20px;
+        bottom: 0; left: -18px;
+        width: 18px; height: 18px;
         background: transparent;
         border-bottom-right-radius: 50%;
-        box-shadow: 10px 10px 0 $color-dark-bg;
+        box-shadow: 9px 9px 0 $color-dark-bg;
     }
 }
 
-// The Actual Button
+// The arrow button inside the scoop
 .start-btn {
-    width: 60px;
-    height: 60px;
+    width:  $_scoop-btn;
+    height: $_scoop-btn;
     border-radius: 50%;
     background-color: $color-green-accent;
-    color: $color-dark-bg;
+    color: darken($color-green-accent, 45%);
     border: none;
-    font-size: 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
     cursor: pointer;
-    transition: transform 0.2s;
-    
-    &:hover {
-        transform: scale(1.1) rotate(-45deg); // Fun interaction
-        background-color: white;
-    }
+    transition: transform 0.18s, background-color 0.18s;
+    padding: 0;
+
+    &:hover { transform: scale(1.08); background-color: lighten($color-green-accent, 12%); }
+    &:active { transform: scale(0.95); }
 }
 
 // ... (Quiz Step Styles remain the same) ...
 
 .quiz-step-card {
     background-color: $color-content-bg;
-    padding: 30px 25px; 
-    border-radius: 24px; 
-    text-align: center;
+    padding: 28px 25px 24px;
+    border-radius: 24px;
     animation: fadeIn 0.4s ease-out;
-    min-height: 300px;
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
-.quiz-header-row { margin-bottom: 20px; h3 { font-size: 1.4rem; color: $color-text-light; } }
-.quiz-icon { font-size: 2.5em; color: $color-green-accent; margin-bottom: 15px; }
+.quiz-header-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 22px;
+    h3 { font-size: 1.2rem; color: $color-text-light; margin: 0; line-height: 1.3; }
+}
+.quiz-icon { font-size: 2.6em; color: $color-green-accent; flex-shrink: 0; line-height: 1; }
 
 .quiz-options {
-    display: flex; 
-    flex-direction: column; 
-    gap: 12px;
-    
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
     .quiz-btn {
-        background-color: $color-dark-bg;
-        border: 2px solid transparent; 
+        background: $color-dark-bg;
+        border: 1.5px solid rgba(255,255,255,0.08);
         color: $color-text-light;
-        padding: 15px; 
-        border-radius: 12px; 
-        font-size: 1rem;
-        transition: all 0.2s; 
-        font-weight: 500;
-        
-        &:hover { 
-            border-color: $color-green-accent; 
-            background-color: lighten($color-dark-bg, 5%); 
+        padding: 12px 16px;
+        border-radius: 14px;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 0.18s, background 0.18s;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        .quiz-btn-label { font-weight: 700; font-size: 0.95em; font-family: $font-header; }
+        .quiz-btn-sub   { font-size: 0.78em; opacity: 0.45; }
+
+        &:hover {
+            border-color: $color-green-accent;
+            background: lighten($color-dark-bg, 4%);
         }
-        
         &:active { transform: scale(0.98); }
     }
 }
 
-.quiz-progress {
-    margin-top: 25px; 
-    color: #888; 
-    font-size: 0.9em; 
-    text-transform: uppercase; 
+.quiz-progress-label {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 0;
+    color: #888;
+    font-size: 0.82em;
+    text-transform: uppercase;
     letter-spacing: 1px;
 }
 
+.quiz-progress {
+    margin-top: 25px;
+    color: #888;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.section-title-label {
+    font-size: 1.2rem;
+    color: $color-text-light;
+    margin: 0 0 16px 0;
+}
+
+#filter-results-container {
+    margin-bottom: 24px;
+}
+
 .primary-button.outline {
-    background-color: transparent; 
-    border: 2px solid $color-green-accent; 
+    background-color: transparent;
+    border: 2px solid $color-green-accent;
     color: $color-green-accent;
     &:hover { background-color: $color-green-accent; color: $color-dark-bg; }
 }
@@ -586,6 +1539,21 @@ input[type="password"],
 // 11. UTILITIES
 // ----------------------------------------------------
 .loading-text, .no-results, .error-text { text-align: center; padding: 30px; color: #888; }
+
+// App logo SVG — sizes like a Font Awesome icon via font-size / currentColor
+.app-logo-icon {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: -0.125em;
+    flex-shrink: 0;
+}
+
+.pot-selector-logo {
+    font-size: 1.3em;
+    color: $color-green-accent;
+    flex-shrink: 0;
+}
 .firebase-emulator-warning { display: none !important; }
 
 .secondary-text-btn {
@@ -612,6 +1580,1623 @@ input[type="password"],
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+// ----------------------------------------------------
+// POT DASHBOARD
+// ----------------------------------------------------
+
+.pot-dashboard-wrapper {
+    padding: 20px;
+    padding-bottom: 120px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.pot-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.pot-connection-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78em;
+    opacity: 0.7;
+}
+
+.conn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &.conn-live    { background: #def39b; box-shadow: 0 0 6px #def39b; animation: pulse 2s infinite; }
+    &.conn-offline { background: #e76f51; }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+}
+
+.pot-selector-card {
+    background-color: $color-content-bg;
+    border-radius: 16px;
+    border: 1px solid transparent;
+    padding: 14px 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: border-color 0.3s ease;
+
+    .selector-label {
+        margin: 0 0 2px 0;
+        font-size: 0.72em;
+        opacity: 0.45;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    &--plant { padding: 16px 18px; align-items: center; gap: 20px; }
+}
+
+.pot-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    cursor: pointer;
+
+    &:hover .pot-avatar-edit { opacity: 1; }
+}
+
+.pot-avatar-circle {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: $color-dark-bg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+
+    .pot-avatar-logo {
+        width: 42px;
+        height: 42px;
+        color: $color-green-accent;
+    }
+}
+
+.pot-avatar-edit {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: $color-green-accent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+
+    i {
+        font-size: 0.55rem;
+        color: $color-dark-bg;
+    }
+}
+
+.pot-plant-name {
+    margin: 0 0 4px 0;
+    font-weight: 700;
+    font-family: $font-header;
+    font-size: 1.05em;
+}
+
+.recently-watered-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78em;
+    color: #64b5f6;
+    opacity: 0.8;
+    margin-bottom: 6px;
+}
+
+.pot-alert-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.alert-dismiss-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.45);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 0.82em;
+    cursor: pointer;
+    font-family: $font-body;
+    margin-left: auto;
+
+    &:hover { background: rgba(255,255,255,0.06); }
+}
+
+.pot-trend-nudge {
+    margin: 6px 0 0 0;
+    font-size: 0.8em;
+    color: #f9c74f;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pot-plant-select {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 1em;
+    font-weight: 700;
+    font-family: $font-header;
+    width: 100%;
+    cursor: pointer;
+    outline: none;
+
+    option { background-color: $color-content-bg; }
+}
+
+.pot-selector-card--select {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px 18px;
+}
+
+.pot-plant-dropdown {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ppd-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background-color: $color-card-highlight;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+
+    &:hover { background-color: lighten($color-card-highlight, 4%); }
+
+    &--selected {
+        border-color: $color-green-accent;
+    }
+}
+
+.ppd-circle {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: $color-dark-bg;
+    border: 2px solid rgba(168, 224, 99, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-header;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: $color-green-accent;
+    background-size: cover;
+    background-position: center;
+}
+
+.ppd-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ppd-name {
+    font-family: $font-header;
+    font-weight: 700;
+    font-size: 0.95em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ppd-sci {
+    font-size: 0.75em;
+    font-style: italic;
+    opacity: 0.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ppd-care-badge {
+    flex-shrink: 0;
+    font-size: 0.7em;
+    font-weight: 700;
+    text-transform: capitalize;
+    padding: 3px 9px;
+    border-radius: 20px;
+    color: $color-dark-bg;
+    letter-spacing: 0.04em;
+}
+
+.pot-metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.metric-card {
+    background-color: $color-content-bg;
+    border-radius: 16px;
+    padding: 16px 14px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    height: 260px;
+    box-sizing: border-box;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.metric-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.metric-top {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.metric-icon {
+    color: $color-green-accent;
+    font-size: 1em;
+}
+
+.metric-label {
+    font-size: 0.72em;
+    opacity: 0.5;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.metric-status-icon {
+    font-size: 0.9em;
+}
+
+.metric-value {
+    font-family: $font-header;
+    font-size: 1.6em;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.metric-range {
+    font-size: 0.75em;
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.metric-range-label {
+    font-size: 0.72em;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.metric-range-values {
+    color: $color-green-accent;
+    font-weight: 700;
+}
+
+// ── Moisture circle card ──────────────────────────────────────────────────────
+.metric-card--moisture {
+    .metric-header-row { margin-bottom: 4px; }
+}
+
+.mc-wrap {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 6px auto 8px;
+    border-radius: 50%;
+    background: $color-dark-bg;
+    align-self: center;
+}
+
+.mc-outer-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 4px solid $color-green-accent;
+    pointer-events: none;
+}
+
+.mc-inner {
+    width: 118px;
+    height: 118px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: $color-dark-bg;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.mc-water {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--fill, 0%);
+    background: $color-green-accent;
+    transition: height 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+}
+
+
+.mc-text-layer {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+}
+
+.mc-text-layer--above {
+    z-index: 2;
+    .mc-pct { color: $color-green-accent; }
+}
+
+.mc-text-layer--below {
+    z-index: 3;
+    transition: clip-path 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+    .mc-pct { color: $color-content-bg; }
+}
+
+.mc-pct {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: $font-header;
+    font-size: 1.35rem;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.mc-header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mc-watered-tag {
+    font-size: 0.68em;
+    color: $color-green-accent;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    i { font-size: 0.9em; }
+}
+
+// ── Temperature thermometer card ──────────────────────────────────────────────
+.metric-card--temperature {
+    .metric-range { text-align: center; align-items: center; }
+}
+
+.thermo-wrap {
+    height: 140px;
+    margin: 8px auto 6px;
+    display: flex;
+    justify-content: center;
+    align-self: center;
+}
+
+// Outer ring — mirrors mc-outer-ring gap style
+.thermo-outer {
+    width: 58px;
+    height: 100%;
+    border-radius: 29px;
+    border: 4px solid $color-green-accent;
+    padding: 6px;
+    background: $color-dark-bg;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+// Inner fill container — rounded corners follow the outer shape
+.thermo-inner {
+    flex: 1;
+    border-radius: 19px;
+    overflow: hidden;
+    background: $color-dark-bg;
+    position: relative;
+}
+
+.thermo-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--fill, 0%);
+    background: $color-green-accent;
+    transition: height 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+    // rounded top — overflow:hidden on thermo-inner clips it naturally
+}
+
+.thermo-text-layer {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+}
+
+.thermo-text-layer--above {
+    z-index: 1;
+    .thermo-pct { color: $color-green-accent; }
+}
+
+.thermo-text-layer--below {
+    z-index: 2;
+    transition: clip-path 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+    .thermo-pct { color: $color-content-bg; }
+}
+
+.thermo-pct {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: $font-header;
+    font-size: 1.35rem;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+
+// ── Humidity ring gauge card ──────────────────────────────────────────────────
+.metric-card--humidity {
+    .metric-range { text-align: center; align-items: center; }
+}
+
+// CCW fill: rotate to 12 o'clock start, scaleX(-1) flips CW stroke to CCW
+// stroke-dashoffset transition drives the smooth fill animation
+.hum-fill-arc {
+    transform-box:    fill-box;
+    transform-origin: center;
+    transform:        rotate(-90deg) scaleX(-1);
+    transition:       stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Square container so the circle SVG renders 1:1
+.hum-gauge-wrap {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 6px auto 2px;
+    align-self: center;
+}
+
+.hum-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.hum-pct-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.hum-pct-text {
+    font-family: $font-header;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: $color-dark-bg;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+// SVG `r` as CSS property — enables smooth radius transition on the fill circle
+.light-fill-circle {
+    transition: r 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// ── Light sun card ────────────────────────────────────────────────────────────
+.metric-card--light {
+    .metric-range { text-align: center; align-items: center; }
+}
+
+.light-sun-wrap {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 4px auto 2px;
+    align-self: center;
+}
+
+.light-sun-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.light-pct-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.light-pct-text {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-family: $font-header;
+    font-size: 1.4rem;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.light-pct-text--above { color: $color-green-accent; }
+.light-pct-text--below { color: $color-dark-bg; }
+
+.light-moon-icon {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.2rem;
+    color: rgba(168, 224, 99, 0.45);
+}
+
+.pot-info-card {
+    background-color: $color-content-bg;
+    border-radius: 16px;
+    padding: 20px;
+    animation: fadeIn 0.3s ease-out;
+
+    .care-note {
+        margin: 10px 0 0 0;
+        font-size: 0.84em;
+        opacity: 0.85;
+        line-height: 1.5;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .care-note-icon {
+        flex-shrink: 0;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: $color-green-accent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        i {
+            color: $color-dark-bg;
+            font-size: 0.85rem;
+        }
+    }
+}
+
+.pot-actions-row {
+    display: flex;
+    gap: 10px;
+}
+
+.pot-action-btn {
+    flex: 1;
+    background-color: $color-content-bg;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: $color-text-light;
+    border-radius: 14px;
+    padding: 12px;
+    font-size: 0.88em;
+    font-family: $font-body;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    &:hover { background: rgba(255,255,255,0.06); }
+
+    &--danger {
+        color: #e76f51;
+        border-color: rgba(231, 111, 81, 0.3);
+        &:hover { background: rgba(231, 111, 81, 0.08); }
+    }
+}
+
+// ----------------------------------------------------
+// PROFILE MENU
+// ----------------------------------------------------
+
+#profile-menu-root {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 1000;
+}
+
+.pmenu-root {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+// ── Profile button ────────────────────────────────────────────────────────────
+
+.pmenu-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+    overflow: hidden;            // clips avatar to circle
+    display: block;
+    outline: 2px solid transparent;
+    outline-offset: 3px;
+    transition: outline-color 0.2s ease, box-shadow 0.2s ease;
+
+    &--open {
+        outline-color: $color-green-accent;
+        box-shadow: 0 0 0 4px rgba(168, 224, 99, 0.18);
+    }
+}
+
+// ── Avatar ────────────────────────────────────────────────────────────────────
+
+.pmenu-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+
+    &--sm {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        object-fit: cover;
+        display: block;
+        overflow: hidden;
+    }
+
+    &--initials {
+        background-color: $color-green-accent;
+        color: $color-dark-bg;
+        font-family: $font-header;
+        font-weight: 700;
+        font-size: 0.9em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+// ── Dropdown panel ────────────────────────────────────────────────────────────
+
+.pmenu-dropdown {
+    margin-top: 10px;
+    width: 280px;
+    background-color: lighten($color-content-bg, 3%);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: fadeIn 0.15s ease-out;
+}
+
+.pmenu-user-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.pmenu-user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.pmenu-user-name {
+    margin: 0;
+    font-family: $font-header;
+    font-weight: 700;
+    font-size: 1em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pmenu-user-email {
+    margin: 2px 0 0 0;
+    font-size: 0.78em;
+    color: rgba(255,255,255,0.4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pmenu-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    margin: 12px 0;
+}
+
+// ── Menu items ────────────────────────────────────────────────────────────────
+
+.pmenu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    background: none;
+    border: none;
+    color: $color-text-light;
+    font-family: $font-body;
+    font-size: 0.92em;
+    padding: 9px 6px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+
+    i { width: 16px; text-align: center; opacity: 0.7; }
+
+    &:hover { background: rgba(255,255,255,0.06); }
+
+    &--danger {
+        color: #e76f51;
+        i { opacity: 1; }
+    }
+}
+
+.pmenu-temp-row {
+    cursor: default;
+    &:hover { background: none; }
+}
+
+.pmenu-temp-toggle {
+    margin-left: auto;
+    display: flex;
+    background: rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.pmenu-temp-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    font-size: 0.82em;
+    font-family: $font-body;
+    padding: 3px 10px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+
+    &.active {
+        background: $color-green-accent;
+        color: $color-dark-bg;
+        font-weight: 700;
+    }
+}
+
+// ── Sub-panel (edit / location) ───────────────────────────────────────────────
+
+.pmenu-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: $font-header;
+    font-weight: 700;
+    font-size: 0.95em;
+}
+
+.pmenu-back-btn {
+    background: none;
+    border: none;
+    color: $color-text-light;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 8px;
+    opacity: 0.6;
+    &:hover { opacity: 1; background: rgba(255,255,255,0.06); }
+}
+
+.pmenu-edit-avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0 12px;
+    cursor: pointer;
+
+    .pmenu-avatar { border: 2px solid rgba(255,255,255,0.15); }
+}
+
+.pmenu-edit-avatar-label {
+    font-size: 0.85em;
+    color: $color-green-accent;
+    opacity: 0.85;
+}
+
+.pmenu-field {
+    margin-bottom: 10px;
+}
+
+.pmenu-field-label {
+    display: block;
+    font-size: 0.72em;
+    opacity: 0.45;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 5px;
+}
+
+.pmenu-input {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: $color-text-light;
+    font-family: $font-body;
+    font-size: 0.92em;
+    padding: 9px 12px;
+    box-sizing: border-box;
+    outline: none;
+
+    &:focus { border-color: rgba(222,243,155,0.4); }
+}
+
+.pmenu-save-btn {
+    width: 100%;
+    background: $color-green-accent;
+    color: $color-dark-bg;
+    border: none;
+    border-radius: 12px;
+    padding: 10px;
+    font-family: $font-header;
+    font-weight: 700;
+    font-size: 0.9em;
+    cursor: pointer;
+    margin-bottom: 6px;
+
+    &--secondary {
+        background: rgba(255,255,255,0.07);
+        color: $color-text-light;
+        margin-bottom: 8px;
+    }
+}
+
+.pmenu-loc-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.pmenu-status-text {
+    margin: 4px 0 0 0;
+    font-size: 0.78em;
+    opacity: 0.6;
+    min-height: 16px;
+}
+
+// ----------------------------------------------------
+// HOME PAGE
+// ----------------------------------------------------
+
+.home-wrapper {
+    padding: 0;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.home-header {
+    margin-bottom: 28px;
+    padding-top: 8px;
+}
+
+.home-greeting {
+    font-family: $font-header;
+    font-size: 1.8em;
+    font-weight: 900;
+    margin: 0 0 10px 0;
+    line-height: 1.1;
+    color: $color-text-light;
+}
+
+// ── Widget Row ────────────────────────────────────────────────────────────────
+.home-widgets-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    align-items: stretch;
+}
+
+// ── Weather Widget (2/3) ──────────────────────────────────────────────────────
+.home-weather-widget {
+    flex: 2;
+    background: $color-content-bg;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 130px;
+}
+
+.hw-location {
+    font-size: 0.72em;
+    font-weight: 700;
+    color: $color-green-accent;
+    margin: 0 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    i { font-size: 0.9em; }
+}
+
+.hw-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex: 1;
+}
+
+.hw-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.hw-temp {
+    font-family: $font-header;
+    font-size: 3.2rem;
+    font-weight: 900;
+    color: $color-text-light;
+    line-height: 1;
+}
+
+.hw-desc {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.70);
+    line-height: 1.2;
+}
+
+.hw-icon {
+    font-size: 4.5rem;
+    color: $color-green-accent;
+    line-height: 1;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+.home-weather-set-loc {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: $color-green-accent;
+    text-decoration: none;
+    font-size: 0.9em;
+    i { font-size: 1em; }
+    &:hover { opacity: 0.8; }
+}
+
+// ── Journal Widget (1/3) ──────────────────────────────────────────────────────
+.home-journal-widget {
+    flex: 1;
+    background: $color-content-bg;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 14px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 130px;
+    position: relative;
+}
+
+.journal-write-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(168, 224, 99, 0.18);
+    border: none;
+    color: $color-green-accent;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    &:hover { background: rgba(168, 224, 99, 0.3); }
+}
+
+.journal-day-num {
+    font-family: $font-header;
+    font-size: 3.4rem;
+    font-weight: 900;
+    color: $color-text-light;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.journal-day-name {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.42);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.home-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+
+    h2 { margin: 0; font-size: 1.1em; font-weight: 700; opacity: 0.85; }
+}
+
+.home-task-badge {
+    background: $color-green-accent;
+    color: $color-dark-bg;
+    font-family: $font-header;
+    font-weight: 700;
+    font-size: 0.78em;
+    border-radius: 20px;
+    padding: 2px 9px;
+}
+
+.home-all-good-card {
+    background: $color-content-bg;
+    border-radius: 18px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid rgba(168,224,99,0.2);
+
+    i {
+        font-size: 1.8em;
+        color: $color-green-accent;
+        flex-shrink: 0;
+    }
+}
+
+.home-all-good-title {
+    margin: 0 0 2px 0;
+    font-family: $font-header;
+    font-weight: 700;
+    font-size: 1em;
+}
+
+.home-all-good-sub {
+    margin: 0;
+    font-size: 0.83em;
+    opacity: 0.5;
+}
+
+.home-empty-card {
+    position: relative;
+    overflow: hidden;
+    padding: 28px 24px 26px;
+    background: $color-content-bg;
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 170px;
+}
+
+// Decorative circle + logo, clipped by overflow:hidden on the card
+.home-empty-deco {
+    position: absolute;
+    right: -60px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 275px;
+    height: 275px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 0;
+}
+
+.home-empty-circle {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: $color-green-accent;
+    opacity: 0.18;
+}
+
+.home-empty-logo {
+    font-size: 6em;
+    color: $color-green-accent;
+    position: relative;
+    z-index: 1;
+}
+
+.home-empty-title {
+    font-family: $font-header;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: $color-text-light;
+    margin: 0 0 8px;
+    line-height: 1.05;
+    max-width: 58%;
+    position: relative;
+    z-index: 1;
+}
+
+.home-empty-sub {
+    font-size: 0.82em;
+    color: rgba(255,255,255,0.38);
+    margin: 0 0 22px;
+    max-width: 58%;
+    line-height: 1.5;
+    position: relative;
+    z-index: 1;
+}
+
+.home-empty-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: $color-dark-bg;
+    color: $color-text-light;
+    padding: 13px 22px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-family: $font-header;
+    font-weight: 700;
+    font-size: 0.95em;
+    position: relative;
+    z-index: 1;
+    transition: background 0.18s;
+
+    i { color: $color-green-accent; font-size: 0.9em; }
+
+    &:hover { background: lighten($color-dark-bg, 6%); }
+}
+
+// ── Home Hero / Lockscreen ──────────────────────────────────────────────────
+.home-hero {
+    position: relative;
+    width: calc(100% - 32px);
+    margin: 16px 16px 0;
+    height: 70vh;
+    min-height: 360px;
+    overflow: hidden;
+    background: $color-dark-bg;
+    border-radius: 22px;
+}
+
+.home-hero-slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 1.4s ease;
+    &.is-active { opacity: 1; }
+}
+
+// Seamless gradient: photo → dark green app background
+.home-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        transparent            0%,
+        transparent            28%,
+        rgba(10, 26, 16, 0.10) 48%,
+        rgba(10, 26, 16, 0.60) 64%,
+        rgba(10, 26, 16, 0.92) 74%,
+        #0a1a10                82%
+    );
+    z-index: 1;
+}
+
+.home-hero-content {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+// ── Plant label — top-left, no pill ──────────────────────────────────────────
+.hero-plant-label {
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    transition: opacity 0.4s ease;
+
+    .hero-pl-name {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.82);
+        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+    }
+
+    .hero-pl-date {
+        font-size: 0.6rem;
+        color: rgba(255, 255, 255, 0.44);
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+        display: block;
+    }
+}
+
+// ── Dots ──────────────────────────────────────────────────────────────────────
+.home-hero-dots {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    padding-bottom: 10px;
+    position: relative;
+    z-index: 3;
+}
+
+.home-hero-dot {
+    height: 4px;
+    width: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    transition: background 0.3s ease, width 0.3s ease;
+    &.is-active {
+        background: rgba(255, 255, 255, 0.85);
+        width: 14px;
+    }
+}
+
+// ── Bottom info bar ───────────────────────────────────────────────────────────
+.hhg {
+    width: 100%;
+    padding: 4px 16px 20px;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.hhg-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.hhg-item-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.hhg-item-icon {
+    font-size: 0.95rem;
+    color: rgba(168, 224, 99, 0.72);
+}
+
+.hhg-item-val {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.88);
+    white-space: nowrap;
+    &--lg {
+        font-size: 1.45rem;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        line-height: 1;
+    }
+}
+
+.hhg-item-sub {
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.4);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.hhg-sep {
+    width: 1px;
+    height: 30px;
+    background: rgba(168, 224, 99, 0.12);
+    flex-shrink: 0;
+}
+
+.home-tasks-wrap {
+    padding: 20px 16px 100px;
+}
+
+// ----------------------------------------------------
+// COMMON HOUSEPLANTS (image-card style)
+// ----------------------------------------------------
+
+.discover-section-label {
+    font-family: $font-header;
+    font-size: 1.1em;
+    font-weight: 700;
+    opacity: 0.85;
+    margin: 0 0 14px 0;
+}
+
+#common-houseplants {
+    margin-top: 32px;
+    padding: 0;
+}
+
+.houseplant-scroll {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding: 4px 20px 20px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+}
+
+// ── Houseplant card (reference image style) ───────────────────────────────────
+.hp-card {
+    flex-shrink: 0;
+    width: 200px;
+    background: $color-content-bg;
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: transform 0.18s ease;
+
+    &:hover { transform: translateY(-2px); }
+}
+
+.hp-card-img-wrap {
+    width: 100%;
+    height: 140px;
+    overflow: hidden;
+    border-radius: 18px 18px 0 0;
+    cursor: pointer;
+}
+
+.hp-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.25s ease;
+
+    .hp-card:hover & { transform: scale(1.04); }
+
+    &--empty {
+        background: $color-card-highlight;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255,255,255,0.2);
+        font-size: 2em;
+    }
+}
+
+.hp-card-footer {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hp-card-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.hp-card-name {
+    margin: 0 0 2px;
+    font-family: $font-header;
+    font-weight: 700;
+    font-size: 0.88em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hp-card-sci {
+    margin: 0;
+    font-size: 0.7em;
+    color: rgba(255,255,255,0.38);
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hp-card-add-btn {
+    flex-shrink: 0;
+    background: $color-green-accent;
+    color: $color-dark-bg;
+    border: none;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-family: $font-header;
+    font-weight: 700;
+    font-size: 0.75em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    transition: background 0.15s;
+
+    &:hover { background: lighten(#a8e063, 8%); }
+}
+
+// ----------------------------------------------------
+// PLANT RESULTS GRID (quiz / search results)
+// ----------------------------------------------------
+
+.plant-results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0 4px;
+}
+
+.plant-result-card {
+    background: $color-content-bg;
+    border-radius: 18px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.18s ease;
+    display: flex;
+    flex-direction: column;
+
+    &:hover { transform: translateY(-2px); }
+}
+
+.plant-result-img {
+    width: 100%;
+    height: 110px;
+    background-size: cover;
+    background-position: center;
+    background-color: $color-card-highlight;
+    &--empty {
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2em; color: rgba($color-green-accent, 0.35);
+    }
+}
+
+.plant-result-body {
+    padding: 10px 12px 12px;
+}
+
+.plant-result-name {
+    margin: 0 0 2px;
+    font-family: $font-header;
+    font-weight: 700;
+    font-size: 0.88em;
+    line-height: 1.2;
+}
+
+.plant-result-sci {
+    margin: 0 0 8px;
+    font-size: 0.7em;
+    color: rgba(255,255,255,0.38);
+    font-style: italic;
+}
+
+.plant-result-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.plant-tag {
+    font-size: 0.65em;
+    background: rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 2px 7px;
+    white-space: nowrap;
+    text-transform: capitalize;
+
+    i { margin-right: 3px; opacity: 0.7; }
+
+    &--warn {
+        background: rgba(231,111,81,0.15);
+        color: #e76f51;
+    }
+}
+
+.quiz-retake-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.55);
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-family: $font-body;
+    font-size: 0.85em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover { background: rgba(255,255,255,0.06); color: $color-text-light; }
+}
+
+.quiz-progress-label {
+    margin: 2px 0 0;
+    font-size: 0.75em;
+    opacity: 0.4;
 }
 
 // ----------------------------------------------------
@@ -717,6 +3302,10 @@ input[type="password"],
     background-size: cover; background-position: center;
     border: 3px solid $color-green-accent;
     background-color: $color-dark-bg;
+    &--empty {
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2em; color: rgba($color-green-accent, 0.4);
+    }
 }
 
 .upload-btn-label {
@@ -773,71 +3362,66 @@ input[type="password"],
 }
 
 // ----------------------------------------------------
-// 14. MY PLANTS GALLERY (Large Grid)
+// 14. MY PLANTS GALLERY
 // ----------------------------------------------------
 
 .my-plant-gallery-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; // 2 Columns
-    gap: 15px;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
 }
 
 .gallery-card {
     position: relative;
-    max-height: 200px; // Tall, large image
-    border-radius: 20px;
+    aspect-ratio: 3 / 4;
+    border-radius: 16px;
     overflow: hidden;
     cursor: pointer;
+    background-color: $color-content-bg;
+    transition: transform 0.2s ease;
 
+    &:hover { transform: scale(0.98); }
 }
 
 .gallery-image {
-    width: 100%; height: 100%;
-    background-size: cover; background-position: center;
-}
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    image-rendering: high-quality;
 
-.gallery-overlay {
-    position: absolute; bottom: 0; left: 0; width: 100%;
-    padding: 20px 10px 10px 10px;
-    
-    h3 {
-        margin: 0;
-        color: white;
-        font-size: 1rem;
-        text-align: center;
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    &--empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: $color-card-highlight;
+
+        .gallery-empty-icon {
+            width: 48px;
+            height: 48px;
+            color: rgba($color-green-accent, 0.35);
+        }
     }
 }
 
-// ----------------------------------------------------
-// 14. MY PLANTS GALLERY (Clean Grid)
-// ----------------------------------------------------
-
-.my-plant-gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); // 3 Columns for smaller images
-    gap: 10px; // Tighter gap
+.gallery-card-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 28px 12px 12px;
+    background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%);
 }
 
-.gallery-card {
-    position: relative;
-    aspect-ratio: 1 / 1; // Perfect squares
-    border-radius: 12px;
+.gallery-card-name {
+    font-family: $font-header;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #fff;
+    white-space: nowrap;
     overflow: hidden;
-    cursor: pointer;
-    // REMOVED SHADOWS & OVERLAYS
-    background-color: $color-content-bg; // Fallback color
-    transition: transform 0.2s, opacity 0.2s;
-
-    &:hover { 
-        transform: scale(0.98); 
-        opacity: 0.9;
-    }
-}
-
-.gallery-image {
-    width: 100%; height: 100%;
-    background-size: cover; background-position: center;
+    text-overflow: ellipsis;
+    display: block;
 }
 
 // ----------------------------------------------------
@@ -855,25 +3439,149 @@ input[type="password"],
 }
 
 .care-dashboard {
-    display: flex; gap: 10px; margin: 20px 0;
+    display: flex; gap: 8px; margin: 20px 0; flex-wrap: wrap;
 }
 
 .care-card {
     flex: 1;
+    min-width: 80px;
+    position: relative;
     background-color: $color-content-bg;
-    padding: 15px; border-radius: 16px;
+    padding: 14px 10px; border-radius: 16px;
     display: flex; flex-direction: column; align-items: center; text-align: center;
-    
-    i { font-size: 1.5rem; margin-bottom: 8px; }
-    span { font-size: 0.75rem; color: #aaa; text-transform: uppercase; }
-    strong { font-size: 1.1rem; color: white; margin: 5px 0 10px 0; }
-    
+
+    i { font-size: 1.4rem; margin-bottom: 6px; }
+    span { font-size: 0.7rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.04em; }
+    strong { font-size: 1rem; color: white; margin: 4px 0 10px 0; }
+
     .action-chip {
         background-color: $color-dark-bg;
         border: 1px solid rgba(255,255,255,0.2);
         color: $color-green-accent;
-        padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+        padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+        white-space: nowrap;
         &:hover { background-color: $color-green-accent; color: $color-dark-bg; }
+    }
+
+    &--prompt {
+        border: 1px solid rgba($color-green-accent, 0.5);
+    }
+}
+
+.journal-prompt-dot {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background-color: $color-green-accent;
+    animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(1.3); }
+}
+
+.journal-prompt-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba($color-green-accent, 0.1);
+    border: 1px solid rgba($color-green-accent, 0.3);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    color: $color-green-accent;
+    margin-bottom: 12px;
+
+    i { font-size: 1rem; }
+}
+
+// ── Journal Modal ─────────────────────────────────────────────────────────────
+
+.journal-modal-card {
+    gap: 16px;
+}
+
+.journal-photo-section {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.journal-photo-preview {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    background-color: $color-card-highlight;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &--empty .journal-empty-icon {
+        width: 32px; height: 32px;
+        color: rgba($color-green-accent, 0.35);
+    }
+}
+
+.journal-photo-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.journal-replace-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+
+    input[type="checkbox"] { accent-color: $color-green-accent; width: 16px; height: 16px; }
+}
+
+.journal-textarea {
+    width: 100%;
+    background-color: $color-dark-bg;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    color: white;
+    padding: 12px;
+    font-family: $font-body;
+    font-size: 0.9rem;
+    resize: vertical;
+    box-sizing: border-box;
+
+    &:focus { outline: 1px solid $color-green-accent; }
+}
+
+.journal-rating-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+.journal-rating-btn {
+    background-color: $color-dark-bg;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7);
+    border-radius: 10px;
+    padding: 10px 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover { border-color: $color-green-accent; color: $color-green-accent; }
+
+    &.selected {
+        background-color: $color-green-accent;
+        border-color: $color-green-accent;
+        color: $color-dark-bg;
     }
 }
 
@@ -914,8 +3622,28 @@ input[type="password"],
 .task-list {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
     margin-top: 15px;
+}
+
+.task-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.task-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    opacity: 0.6;
+    padding-left: 2px;
+
+    i { font-size: 0.8rem; }
 }
 
 .task-card {
@@ -973,4 +3701,51 @@ input[type="password"],
         color: $color-dark-bg;
         transform: scale(1.1);
     }
+}
+
+// ----------------------------------------------------
+// RESPONSIVE — mobile adjustments
+// ----------------------------------------------------
+
+// Small phones (≤ 390px — iPhone SE, older Androids)
+@media (max-width: 390px) {
+
+    // Auth
+    .auth-wrapper .auth-header { font-size: 1.6rem; }
+    .ob-title { font-size: 1.65rem; }
+    .ob-blob  { width: 200px; height: 200px; }
+
+    // Search / results
+    .plant-results-grid { grid-template-columns: 1fr; }
+
+    // Plant detail
+    .detail-header-image { height: 220px; }
+    .stats-grid { grid-template-columns: 1fr; }
+
+    // Pot dashboard — shrink metric gauges to fit 2-col layout
+    .hum-gauge-wrap,
+    .light-sun-wrap { width: 110px; height: 110px; }
+    .thermo-wrap    { height: 110px; }
+    .mc-wrap        { width: 110px; height: 110px; }
+
+    // Profile menu — don't overflow screen edge
+    .pmenu-dropdown { width: calc(100vw - 32px); }
+
+    // Home
+    .home-header .home-greeting { font-size: 1.3rem; }
+
+    // Pot selector avatar — slightly smaller on tiny screens
+    .pot-avatar-wrap { width: 60px; height: 60px; }
+}
+
+// Very small phones (≤ 320px)
+@media (max-width: 320px) {
+    .auth-wrapper .auth-header { font-size: 1.6rem; }
+
+    .pot-metrics-grid { grid-template-columns: 1fr; }
+
+    .hum-gauge-wrap,
+    .light-sun-wrap { width: 140px; height: 140px; } // restore full size in single-col
+    .thermo-wrap    { height: 140px; }
+    .mc-wrap        { width: 140px; height: 140px; }
 }

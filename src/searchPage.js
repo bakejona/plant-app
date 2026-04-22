@@ -1,70 +1,161 @@
 // src/searchPage.js
 
-import { searchPlantSpecies, fetchTrendingPlants } from './plantService.js';
+import { rtdb } from './firebase.js';
+import { ref, get } from 'firebase/database';
+import { logoSVG } from './logoSVG.js';
+import { PLANT_IMAGES } from './plantImages.js';
 
-// MODULE STATE
-let savedFilters = { indoor: 1 };
+// ── Extra metadata not in RTDB ────────────────────────────────────────────────
+const PLANT_EXTRAS = {
+    aloe_vera:           { poisonous: true,  maintenance: 'low' },
+    chinese_money_plant: { poisonous: false, maintenance: 'moderate' },
+    jade_plant:          { poisonous: true,  maintenance: 'low' },
+    monstera:            { poisonous: true,  maintenance: 'moderate' },
+    peace_lily:          { poisonous: true,  maintenance: 'moderate' },
+    pothos:              { poisonous: true,  maintenance: 'low' },
+    rubber_plant:        { poisonous: true,  maintenance: 'moderate' },
+    snake_plant:         { poisonous: true,  maintenance: 'low' },
+    spider_plant:        { poisonous: false, maintenance: 'low' },
+    string_of_pearls:    { poisonous: true,  maintenance: 'moderate' },
+    zebra_plant:         { poisonous: false, maintenance: 'high' },
+    zz_plant:            { poisonous: true,  maintenance: 'low' },
+};
+
+// ── RTDB plant cache ──────────────────────────────────────────────────────────
+let cachedPlants = null;
+
+async function getAllPlants() {
+    if (cachedPlants) return cachedPlants;
+    const snap = await get(ref(rtdb, '/plants'));
+    if (!snap.exists()) return [];
+    cachedPlants = Object.entries(snap.val()).map(([id, p]) => ({
+        id, ...p, ...PLANT_EXTRAS[id]
+    }));
+    return cachedPlants;
+}
+
+// ── Client-side filtering ─────────────────────────────────────────────────────
+function filterPlants(plants, query, filters) {
+    let result = plants;
+
+    if (query) {
+        const q = query.toLowerCase();
+        result = result.filter(p =>
+            p.name?.toLowerCase().includes(q) ||
+            p.scientific_name?.toLowerCase().includes(q)
+        );
+    }
+
+    if (filters.sunlight) {
+        result = result.filter(p => {
+            const lightMax = p.care?.light?.max ?? 50;
+            const lightMin = p.care?.light?.min ?? 0;
+            if (filters.sunlight === 'full_sun')   return lightMax >= 50;
+            if (filters.sunlight === 'part_shade') return lightMax >= 25 && lightMin < 55;
+            if (filters.sunlight === 'shade')      return lightMin <= 25;
+            return true;
+        });
+    }
+
+    if (filters.watering) {
+        result = result.filter(p => {
+            const max = p.care?.moisture?.max ?? 50;
+            if (filters.watering === 'frequent') return max >= 60;
+            if (filters.watering === 'average')  return max >= 40 && max < 60;
+            if (filters.watering === 'minimum')  return max <= 40;
+            return true;
+        });
+    }
+
+    if (filters.maintenance) {
+        result = result.filter(p => p.maintenance === filters.maintenance);
+    }
+
+    if (filters.poisonous === '0') {
+        result = result.filter(p => !p.poisonous);
+    }
+
+    if (filters.humidity) {
+        result = result.filter(p => {
+            const ideal = p.care?.humidity?.ideal ?? 50;
+            if (filters.humidity === 'high')    return ideal >= 65;
+            if (filters.humidity === 'average') return ideal >= 50 && ideal < 65;
+            if (filters.humidity === 'low')     return ideal < 50;
+            return true;
+        });
+    }
+
+    if (filters.temperature) {
+        result = result.filter(p => {
+            const min = p.care?.temperature_c?.min ?? 15;
+            if (filters.temperature === 'cold')    return min <= 13;
+            if (filters.temperature === 'average') return min > 13 && min < 18;
+            if (filters.temperature === 'warm')    return min >= 18;
+            return true;
+        });
+    }
+
+    return result;
+}
+
+// ── Module state ──────────────────────────────────────────────────────────────
+let savedFilters  = {};
 let savedQuizStep = 0;
-let isQuizActive = true; 
+let filterPanelOpen = false;
 
+// ── Quiz definition ───────────────────────────────────────────────────────────
+const quizSteps = [
+    {
+        question: "How's the light in your space?",
+        icon: "fa-sun",
+        options: [
+            { label: "Bright & sunny",  sublabel: "Direct sunlight most of the day", value: "full_sun",   type: "sunlight" },
+            { label: "Bright indirect", sublabel: "Near a window, no direct rays",   value: "part_shade", type: "sunlight" },
+            { label: "Low light",       sublabel: "Far from windows or artificial",  value: "shade",      type: "sunlight" },
+        ]
+    },
+    {
+        question: "How hands-on do you want to be?",
+        icon: "fa-seedling",
+        options: [
+            { label: "Low effort",  sublabel: "I often forget to water",     value: "low",      type: "maintenance" },
+            { label: "Moderate",    sublabel: "Check in a few times a week", value: "moderate", type: "maintenance" },
+            { label: "Attentive",   sublabel: "I love caring for plants",    value: "high",     type: "maintenance" },
+        ]
+    },
+    {
+        question: "How often will you water?",
+        icon: "fa-droplet",
+        options: [
+            { label: "Frequently",      sublabel: "Every few days",       value: "frequent", type: "watering" },
+            { label: "Every 1–2 weeks", sublabel: "A regular routine",    value: "average",  type: "watering" },
+            { label: "Rarely",          sublabel: "Once a month or less", value: "minimum",  type: "watering" },
+        ]
+    },
+];
+
+// ── Main render ───────────────────────────────────────────────────────────────
 export async function renderSearchPage(container, profile, authUser) {
     container.innerHTML = generateSearchHTML();
-    
-    // DOM Elements
-    const searchInput = document.getElementById('plant-search-input');
-    const resultsContainer = document.getElementById('search-results-list');
-    const sectionTitle = document.getElementById('section-title');
-    const quizContainer = document.getElementById('plant-quiz-container');
-    const quizContent = document.getElementById('quiz-content');
-    
-    // Quiz Data
-    const quizSteps = [
-        {
-            question: "How much light does your space get?",
-            icon: "fa-sun",
-            options: [
-                { label: "Bright Direct Sun", value: "full_sun", type: "sunlight" },
-                { label: "Bright Indirect", value: "part_shade", type: "sunlight" },
-                { label: "Low / Artificial", value: "shade", type: "sunlight" }
-            ]
-        },
-        {
-            question: "How busy are you?",
-            icon: "fa-user-clock",
-            options: [
-                { label: "Very Busy (Hard to Kill)", value: "low", type: "maintenance" },
-                { label: "I have some time", value: "moderate", type: "maintenance" },
-                { label: "Plant Expert", value: "high", type: "maintenance" }
-            ]
-        },
-        {
-            question: "How often will you water?",
-            icon: "fa-droplet",
-            options: [
-                { label: "Daily / Weekly", value: "frequent", type: "watering" },
-                { label: "Every 1-2 Weeks", value: "average", type: "watering" },
-                { label: "Ideally Never (Monthly)", value: "minimum", type: "watering" }
-            ]
-        },
-        {
-            question: "Do you have pets?",
-            icon: "fa-paw",
-            options: [
-                { label: "Yes (Pet Safe Only)", value: "0", type: "poisonous" }, 
-                { label: "No (Any Plant)", value: "1", type: "poisonous" } 
-            ]
-        }
-    ];
 
-    // --- RENDER START SCREEN ---
+    const searchInput           = document.getElementById('plant-search-input');
+    const resultsContainer      = document.getElementById('search-results-list');
+    const sectionTitle          = document.getElementById('section-title');
+    const quizContainer         = document.getElementById('plant-quiz-container');
+    const quizContent           = document.getElementById('quiz-content');
+    const filterBtn             = document.getElementById('filter-btn');
+    const filterPanel           = document.getElementById('filter-panel');
+    const filterResultsContainer = document.getElementById('filter-results-container');
+    const filterResultsList     = document.getElementById('filter-results-list');
+
+    // ── Quiz start screen ─────────────────────────────────────────────────────
     const renderQuizStart = () => {
-        if(sectionTitle) sectionTitle.style.display = 'none';
-        
+        sectionTitle.style.display = 'none';
         quizContent.innerHTML = `
             <div class="quiz-start-card fade-in">
                 <div class="quiz-start-content">
                     <h2>Find Your Perfect Plant</h2>
-                    <p>Answer 4 simple questions to discover your best match.</p>
+                    <p>Answer 4 quick questions to find your best match.</p>
                 </div>
                 <div class="quiz-btn-container">
                     <button id="start-quiz-btn" class="start-btn">
@@ -73,58 +164,42 @@ export async function renderSearchPage(container, profile, authUser) {
                 </div>
             </div>
         `;
-
         document.getElementById('start-quiz-btn').addEventListener('click', () => {
             savedQuizStep = 0;
             renderQuizStep(0);
         });
     };
 
-    // --- RENDER QUIZ STEP ---
+    // ── Quiz step ─────────────────────────────────────────────────────────────
     const renderQuizStep = (stepIndex) => {
-        if (stepIndex >= quizSteps.length) {
-            finishQuiz();
-            return;
-        }
-
-        if(sectionTitle) sectionTitle.style.display = 'none';
+        if (stepIndex >= quizSteps.length) { finishQuiz(); return; }
+        sectionTitle.style.display = 'none';
 
         const step = quizSteps[stepIndex];
-        
-        let html = `
+        quizContent.innerHTML = `
             <div class="quiz-step-card fade-in">
                 <div class="quiz-header-row">
                     <div class="quiz-icon"><i class="fa-solid ${step.icon}"></i></div>
                     <h3>${step.question}</h3>
                 </div>
                 <div class="quiz-options">
+                    ${step.options.map(opt => `
+                        <button class="quiz-btn" data-type="${opt.type}" data-value="${opt.value}">
+                            <span class="quiz-btn-label">${opt.label}</span>
+                            <span class="quiz-btn-sub">${opt.sublabel}</span>
+                        </button>
+                    `).join('')}
+                </div>
+                <p class="quiz-progress-label">Step ${stepIndex + 1} of ${quizSteps.length}</p>
+            </div>
         `;
 
-        step.options.forEach(opt => {
-            html += `
-                <button class="quiz-btn" data-type="${opt.type}" data-value="${opt.value}">
-                    ${opt.label}
-                </button>
-            `;
-        });
-
-        html += `</div>
-            <div class="quiz-progress">Step ${stepIndex + 1} of ${quizSteps.length}</div>
-        </div>`;
-
-        quizContent.innerHTML = html;
-
         quizContent.querySelectorAll('.quiz-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const type = e.target.dataset.type;
-                const val = e.target.dataset.value;
-                
-                if (type === 'poisonous' && val === '1') {
-                    // Do nothing
-                } else {
-                    savedFilters[type] = val;
+            btn.addEventListener('click', () => {
+                const { type, value } = btn.dataset;
+                if (!(type === 'poisonous' && value === 'any')) {
+                    savedFilters[type] = value;
                 }
-                
                 savedQuizStep++;
                 renderQuizStep(savedQuizStep);
             });
@@ -132,206 +207,343 @@ export async function renderSearchPage(container, profile, authUser) {
     };
 
     const finishQuiz = () => {
-        isQuizActive = false;
         quizContainer.style.display = 'none';
-        updateResults(); 
+        updateResults(true);
     };
 
     const resetQuiz = () => {
-        savedFilters = { indoor: 1 }; 
+        savedFilters  = {};
         savedQuizStep = 0;
-        isQuizActive = true;
-        searchInput.value = ''; 
-        
+        searchInput.value = '';
         resultsContainer.style.display = 'none';
-        quizContainer.style.display = 'block';
-        
-        renderQuizStart(); 
+        filterResultsContainer.style.display = 'none';
+        quizContainer.style.display    = 'block';
+        filterPanel.style.display = 'none';
+        filterPanelOpen = false;
+        filterBtn?.classList.remove('filter-btn--open');
+        const hpSection = container.querySelector('#common-houseplants');
+        if (hpSection) hpSection.style.display = '';
+        renderQuizStart();
+        updateFilterBadge();
     };
 
-    // --- 🏆 UPDATED: LOGIC TO SEPARATE MODES ---
-    const updateResults = async () => {
-        const query = searchInput.value.trim();
-        const hasQuizFilters = Object.keys(savedFilters).length > 1;
+    // ── Filter panel toggle ───────────────────────────────────────────────────
+    const filterGroups = [
+        {
+            key: 'maintenance', label: 'Care Level',
+            options: [
+                { label: 'Easy',      value: 'low' },
+                { label: 'Moderate',  value: 'moderate' },
+                { label: 'Demanding', value: 'high' },
+            ]
+        },
+        {
+            key: 'watering', label: 'Water Frequency',
+            options: [
+                { label: 'Frequent',  value: 'frequent' },
+                { label: '1–2 weeks', value: 'average' },
+                { label: 'Monthly+',  value: 'minimum' },
+            ]
+        },
+        {
+            key: 'humidity', label: 'Humidity',
+            options: [
+                { label: 'High',    value: 'high' },
+                { label: 'Average', value: 'average' },
+                { label: 'Low',     value: 'low' },
+            ]
+        },
+        {
+            key: 'poisonous', label: 'Toxicity',
+            options: [
+                { label: 'Pet-safe only', value: '0' },
+                { label: 'Any',           value: 'any' },
+            ]
+        },
+        {
+            key: 'temperature', label: 'Temperature Tolerance',
+            options: [
+                { label: 'Cold tolerant', value: 'cold' },
+                { label: 'Average',       value: 'average' },
+                { label: 'Warm only',     value: 'warm' },
+            ]
+        },
+    ];
 
-        // MODE 1: MANUAL SEARCH (Prioritize this if user types anything)
-        if (query.length > 0) {
-            isQuizActive = false; // We are searching, not quizzing
-            
-            sectionTitle.style.display = 'block';
-            sectionTitle.textContent = `Results for "${query}"`;
-
-            quizContainer.style.display = 'none';
-            resultsContainer.style.display = 'block';
-            resultsContainer.innerHTML = '<p class="loading-text">Finding plants...</p>';
-
-            try {
-                // 🔒 Search ALL Indoor Plants (Ignore Quiz Filters)
-                const results = await searchPlantSpecies(query, { indoor: 1 });
-                
-                if (results.length === 0) {
-                    resultsContainer.innerHTML = `<p class="no-results">No plants found.</p>`;
-                } else {
-                    // Just Render List (NO Retake Buttons)
-                    resultsContainer.innerHTML = renderGroupedPlantList(results);
-                }
-            } catch (error) {
-                resultsContainer.innerHTML = `<p class="error-text">Error: ${error.message}</p>`;
-            }
-        } 
-        // MODE 2: QUIZ RESULTS (No text, but user finished quiz)
-        else if (hasQuizFilters) {
-            isQuizActive = false;
-            
-            sectionTitle.style.display = 'block';
-            sectionTitle.textContent = "Your Matches";
-
-            quizContainer.style.display = 'none';
-            resultsContainer.style.display = 'block';
-            
-            // Show Retake Button at TOP
-            resultsContainer.innerHTML = `
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <button id="retake-quiz-btn-top" class="primary-button" style="font-size: 0.9em; padding: 8px 16px;">
-                        <i class="fa-solid fa-rotate-left"></i> Retake Quiz
-                    </button>
+    const renderFilterPanel = () => {
+        filterPanel.innerHTML = filterGroups.map(group => `
+            <div class="filter-group">
+                <p class="filter-group-label">${group.label}</p>
+                <div class="filter-group-pills">
+                    ${group.options.map(opt => {
+                        const active = savedFilters[group.key] === opt.value;
+                        return `<button class="filter-pill ${active ? 'filter-pill--active' : ''}"
+                            data-key="${group.key}" data-value="${opt.value}">${opt.label}</button>`;
+                    }).join('')}
                 </div>
-                <p class="loading-text">Finding matches...</p>
-            `;
-            
-            document.getElementById('retake-quiz-btn-top').addEventListener('click', resetQuiz);
+            </div>
+        `).join('') + `
+            <div class="filter-actions-row">
+                <button id="filter-show-btn" class="filter-show-btn">Show results</button>
+                <button id="filter-clear-btn" class="filter-clear-btn">Clear filters</button>
+            </div>
+        `;
 
+        filterPanel.querySelectorAll('.filter-pill').forEach(pill => {
+            pill.addEventListener('click', () => {
+                const { key, value } = pill.dataset;
+                if (savedFilters[key] === value) {
+                    delete savedFilters[key];
+                } else {
+                    savedFilters[key] = value;
+                }
+                renderFilterPanel();
+                updateFilterBadge();
+            });
+        });
+
+        document.getElementById('filter-clear-btn')?.addEventListener('click', () => {
+            filterGroups.forEach(g => delete savedFilters[g.key]);
+            renderFilterPanel();
+            updateFilterBadge();
+        });
+
+        document.getElementById('filter-show-btn')?.addEventListener('click', () => {
+            filterPanel.style.display = 'none';
+            filterPanelOpen = false;
+            filterBtn?.classList.remove('filter-btn--open');
+            updateResults();
+        });
+    };
+
+    const updateFilterBadge = () => {
+        const activeCount = filterGroups.filter(g => savedFilters[g.key] !== undefined).length;
+        const badge = document.getElementById('filter-badge');
+        if (badge) {
+            badge.textContent = activeCount;
+            badge.style.display = activeCount > 0 ? 'flex' : 'none';
+        }
+    };
+
+    filterBtn?.addEventListener('click', () => {
+        filterPanelOpen = !filterPanelOpen;
+        filterPanel.style.display = filterPanelOpen ? 'block' : 'none';
+        filterBtn.classList.toggle('filter-btn--open', filterPanelOpen);
+        if (filterPanelOpen) renderFilterPanel();
+    });
+
+    // ── Results update ────────────────────────────────────────────────────────
+    const updateResults = async (fromQuiz = false) => {
+        const query      = searchInput.value.trim();
+        const hasFilters = Object.keys(savedFilters).length > 0;
+
+        if (query.length > 0) {
+            // Text search: hide quiz and filter results, show main results
+            filterResultsContainer.style.display = 'none';
+            sectionTitle.textContent   = `Results for "${query}"`;
+            sectionTitle.style.display = 'block';
+            quizContainer.style.display    = 'none';
+            resultsContainer.style.display = 'block';
+            resultsContainer.innerHTML     = '<p class="loading-text">Finding plants…</p>';
             try {
-                // Search with SAVED QUIZ FILTERS
-                const results = await searchPlantSpecies('', savedFilters);
-                
+                const all     = await getAllPlants();
+                const results = filterPlants(all, query, savedFilters);
+                resultsContainer.innerHTML = results.length
+                    ? renderPlantGrid(results)
+                    : `<p class="no-results">No plants found for "${query}".</p>`;
+            } catch (e) {
+                resultsContainer.innerHTML = `<p class="error-text">Error: ${e.message}</p>`;
+            }
+        }
+        else if (hasFilters && fromQuiz) {
+            // Quiz completion: hide quiz, show results with retake button
+            filterResultsContainer.style.display = 'none';
+            sectionTitle.textContent   = 'Your Matches';
+            sectionTitle.style.display = 'block';
+            quizContainer.style.display    = 'none';
+            resultsContainer.style.display = 'block';
+            resultsContainer.innerHTML     = '<p class="loading-text">Finding matches…</p>';
+            try {
+                const all     = await getAllPlants();
+                const results = filterPlants(all, '', savedFilters);
                 if (results.length === 0) {
                     resultsContainer.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fa-solid fa-leaf" style="font-size: 3em; color: #444; margin-bottom: 10px;"></i>
-                            <p>No plants found. Try different filters.</p>
-                            <button id="retake-quiz-btn-empty" class="primary-button" style="margin-top:20px;">Retake Quiz</button>
-                        </div>`;
-                    document.getElementById('retake-quiz-btn-empty').addEventListener('click', resetQuiz);
-                } else {
-                    let html = renderGroupedPlantList(results);
-                    
-                    // Show Retake Button at BOTTOM too
-                    html += `
-                        <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
-                            <button id="retake-quiz-btn-bottom" class="primary-button outline">
-                                <i class="fa-solid fa-rotate-left"></i> Retake Quiz
+                        <p class="no-results">No plants matched. Try different answers.</p>
+                        <div style="text-align:center;margin-top:20px;">
+                            <button id="retake-bottom" class="quiz-retake-btn">
+                                <i class="fa-solid fa-rotate-left"></i> Retake quiz
                             </button>
-                        </div>
-                    `;
-                    
-                    // Append list after the top button
-                    resultsContainer.innerHTML += html;
-                    document.getElementById('retake-quiz-btn-bottom').addEventListener('click', resetQuiz);
+                        </div>`;
+                } else {
+                    resultsContainer.innerHTML = renderPlantGrid(results) + `
+                        <div style="text-align:center;margin-top:24px;padding-bottom:8px;">
+                            <button id="retake-bottom" class="quiz-retake-btn">
+                                <i class="fa-solid fa-rotate-left"></i> Retake quiz
+                            </button>
+                        </div>`;
                 }
-            } catch (error) {
-                resultsContainer.innerHTML = `<p class="error-text">Error: ${error.message}</p>`;
+                document.getElementById('retake-bottom')?.addEventListener('click', resetQuiz);
+            } catch (e) {
+                resultsContainer.innerHTML = `<p class="error-text">Error: ${e.message}</p>`;
             }
-        } 
-        // MODE 3: DEFAULT START SCREEN
-        else {
-            isQuizActive = true;
-            sectionTitle.style.display = 'none'; // Hide header for cleaner start screen
+        }
+        else if (hasFilters && !fromQuiz) {
+            // Filter panel results: show above quiz, quiz stays visible
+            sectionTitle.style.display     = 'none';
             resultsContainer.style.display = 'none';
+            filterResultsContainer.style.display = 'block';
+            filterResultsList.innerHTML    = '<p class="loading-text">Finding matches…</p>';
+            // Keep quiz visible below
             quizContainer.style.display = 'block';
+            try {
+                const all     = await getAllPlants();
+                const results = filterPlants(all, '', savedFilters);
+                filterResultsList.innerHTML = results.length
+                    ? `<h2 class="section-title-label">Your Matches</h2>${renderPlantGrid(results)}`
+                    : `<p class="no-results">No plants matched. Try adjusting your filters.</p>`;
+            } catch (e) {
+                filterResultsList.innerHTML = `<p class="error-text">Error: ${e.message}</p>`;
+            }
+        }
+        else {
+            // No query, no filters: show quiz
+            filterResultsContainer.style.display = 'none';
+            sectionTitle.style.display     = 'none';
+            resultsContainer.style.display = 'none';
+            quizContainer.style.display    = 'block';
             renderQuizStart();
         }
     };
 
-    // Listeners
-    let debounceTimer;
-    searchInput.addEventListener('input', (e) => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => updateResults(), 500);
+    // ── Listeners ─────────────────────────────────────────────────────────────
+    let debounce;
+    searchInput.addEventListener('input', () => {
+        clearTimeout(debounce);
+        debounce = setTimeout(updateResults, 400);
+        const hpSection = container.querySelector('#common-houseplants');
+        if (hpSection) hpSection.style.display = searchInput.value.trim() ? 'none' : '';
     });
 
-    container.addEventListener('click', (e) => {
-        const card = e.target.closest('.plant-list-item');
-        if (card && !e.target.closest('.add-btn')) {
-            window.location.hash = `#plantdetail/${card.dataset.id}`;
-        }
+    container.addEventListener('click', e => {
+        const card = e.target.closest('[data-plant-id]');
+        if (card) window.location.hash = `#plantdetail/${card.dataset.plantId}`;
     });
 
-    // Initial Check
-    if (!isQuizActive || Object.keys(savedFilters).length > 1) {
+    // ── Initial render ────────────────────────────────────────────────────────
+    if (Object.keys(savedFilters).length > 0) {
         updateResults();
     } else {
         renderQuizStart();
     }
+    updateFilterBadge();
+    loadCommonHouseplants(container);
 }
 
-// ... (Rest of Helper Functions: renderGroupedPlantList, createPlantListItem, generateSearchHTML remain the same) ...
-function renderGroupedPlantList(plants) {
-    if (!plants || !Array.isArray(plants)) return '';
-    const groups = plants.reduce((acc, plant) => {
-        const firstLetter = (plant.common_name || "U").charAt(0).toUpperCase();
-        if (!acc[firstLetter]) acc[firstLetter] = [];
-        acc[firstLetter].push(plant);
-        return acc;
-    }, {});
-
-    return Object.keys(groups).sort().map(letter => `
-        <div class="alphabet-section">
-            <h3 class="alphabet-header">${letter}</h3>
-            <div class="plant-list-layout">
-                ${groups[letter].map(plant => createPlantListItem(plant)).join('')}
-            </div>
-        </div>
-    `).join('');
+// ── Plant grid ────────────────────────────────────────────────────────────────
+function renderPlantGrid(plants) {
+    return `<div class="plant-results-grid">${plants.map(plantResultCard).join('')}</div>`;
 }
 
-function createPlantListItem(plant) {
-    const imageUrl = plant.default_image?.thumbnail || 'https://via.placeholder.com/150/41b883/FFFFFF?text=No+Image';
-    const name = plant.common_name || 'Unknown Plant';
-    const scientific = Array.isArray(plant.scientific_name) ? plant.scientific_name[0] : plant.scientific_name;
-    
-    let sunIcon = '';
-    if (plant.sunlight?.includes('full_sun')) sunIcon = '<i class="fa-solid fa-sun" title="Bright"></i>';
-    else if (plant.sunlight?.includes('part_shade')) sunIcon = '<i class="fa-solid fa-cloud-sun" title="Indirect"></i>';
-    
-    let waterIcon = '';
-    if (plant.watering === 'Frequent') waterIcon = '<i class="fa-solid fa-droplet" style="color:#64b5f6" title="Frequent"></i>';
-    else if (plant.watering === 'Minimum') waterIcon = '<i class="fa-solid fa-leaf" style="color:#a5d6a7" title="Low Water"></i>';
+function plantResultCard(plant) {
+    const name       = plant.name || 'Unknown Plant';
+    const scientific = plant.scientific_name || '';
+    const lightType  = plant.care?.light?.type || '';
+    const moistMax   = plant.care?.moisture?.max ?? null;
+    const waterLabel = moistMax !== null
+        ? (moistMax >= 60 ? 'Frequent' : moistMax >= 40 ? 'Average' : 'Minimum')
+        : '';
 
+    const imgUrl = PLANT_IMAGES[plant.id] || '';
     return `
-        <div class="plant-list-item" data-id="${plant.id}">
-            <div class="list-image" style="background-image: url('${imageUrl}')"></div>
-            <div class="list-info">
-                <h3 class="list-name">${name}</h3>
-                <p class="list-scientific">${scientific}</p>
+        <div class="plant-result-card" data-plant-id="${plant.id}">
+            <div class="plant-result-img ${imgUrl ? '' : 'plant-result-img--empty'}" ${imgUrl ? `style="background-image:url('${imgUrl}');background-size:cover;background-position:center;"` : ''}>
+                ${imgUrl ? '' : logoSVG()}
             </div>
-            <div class="list-meta">
-                <div class="meta-icons">${sunIcon} ${waterIcon}</div>
-                <i class="fa-solid fa-chevron-right list-arrow"></i>
+            <div class="plant-result-body">
+                <p class="plant-result-name">${name}</p>
+                <p class="plant-result-sci">${scientific}</p>
+                <div class="plant-result-tags">
+                    ${lightType  ? `<span class="plant-tag"><i class="fa-solid fa-sun"></i> ${lightType}</span>` : ''}
+                    ${waterLabel ? `<span class="plant-tag"><i class="fa-solid fa-droplet"></i> ${waterLabel}</span>` : ''}
+                    ${plant.poisonous ? `<span class="plant-tag plant-tag--warn"><i class="fa-solid fa-paw"></i> Toxic</span>` : ''}
+                </div>
             </div>
         </div>
     `;
 }
 
+// ── Common Houseplants ────────────────────────────────────────────────────────
+async function loadCommonHouseplants(container) {
+    const el = container.querySelector('#common-houseplants');
+    if (!el) return;
+    try {
+        const plants = await getAllPlants();
+        if (!plants.length) { el.style.display = 'none'; return; }
+        el.innerHTML = `
+            <h2 class="discover-section-label">Common Houseplants</h2>
+            <div class="houseplant-scroll">
+                ${plants.map(houseplantCard).join('')}
+            </div>
+        `;
+    } catch (e) {
+        el.style.display = 'none';
+    }
+}
+
+function houseplantCard(plant) {
+    const name       = plant.name || 'Unknown Plant';
+    const scientific = plant.scientific_name || '';
+    const imgUrl     = PLANT_IMAGES[plant.id] || '';
+    return `
+        <div class="hp-card">
+            <div class="hp-card-img-wrap" data-plant-id="${plant.id}">
+                <div class="hp-card-img ${imgUrl ? '' : 'hp-card-img--empty'}" ${imgUrl ? `style="background-image:url('${imgUrl}');background-size:cover;background-position:center;"` : ''}>${imgUrl ? '' : logoSVG()}</div>
+            </div>
+            <div class="hp-card-footer">
+                <div class="hp-card-text">
+                    <p class="hp-card-name">${name}</p>
+                    <p class="hp-card-sci">${scientific}</p>
+                </div>
+                <button class="hp-card-add-btn" data-plant-id="${plant.id}" aria-label="Add to collection">
+                    <i class="fa-solid fa-plus"></i> Add
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// ── HTML shell ────────────────────────────────────────────────────────────────
 function generateSearchHTML() {
     return `
         <div class="search-page-wrapper">
             <header class="search-header">
                 <h1>Discover</h1>
-                <div class="search-bar-container">
-                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="plant-search-input" placeholder="Search plants directly...">
+                <div class="search-bar-row">
+                    <div class="search-bar-container">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="plant-search-input" placeholder="Search plants…">
+                    </div>
+                    <button id="filter-btn" class="filter-btn" aria-label="Filters">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span id="filter-badge" class="filter-badge" style="display:none;">0</span>
+                    </button>
                 </div>
+                <div id="filter-panel" class="filter-panel" style="display:none;"></div>
             </header>
 
             <section class="content-section">
-                <h2 id="section-title">Plant Finder</h2>
-                
+                <div id="filter-results-container" style="display:none;">
+                    <div id="filter-results-list"></div>
+                </div>
+                <h2 id="section-title" style="display:none;">Plant Finder</h2>
                 <div id="plant-quiz-container">
                     <div id="quiz-content"></div>
                 </div>
+                <div id="search-results-list" style="display:none;"></div>
+            </section>
 
-                <div id="search-results-list" style="display: none;"></div>
+            <section id="common-houseplants" class="content-section">
+                <p class="loading-text" style="padding:0;">Loading houseplants…</p>
             </section>
         </div>
     `;

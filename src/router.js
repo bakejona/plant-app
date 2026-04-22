@@ -1,11 +1,11 @@
 // src/router.js
 
-import { renderAccountPage } from './accountPage.js'; 
-import { renderHomePage } from './homePage.js'; 
+import { renderHomePage } from './homePage.js';
 import { renderMyPlantsPage } from './myPlantsPage.js';
 import { renderSearchPage } from './searchPage.js';
-import { renderPlantDetailPage } from './plantDetailPage.js'; 
-import { fetchWeather } from './weatherService.js'; 
+import { renderPlantDetailPage } from './plantDetailPage.js';
+import { fetchWeather } from './weatherService.js';
+import { renderPotDashboard, cleanupPotDashboard } from './potDashboard.js';
 
 const appContent = document.getElementById('app-content');
 
@@ -21,21 +21,24 @@ export async function navigate(userProfile, userAuth) {
 
     if (hash.startsWith('#plantdetail/')) {
         page = 'plantdetail';
-        param = hash.split('/')[1]; 
+        param = hash.split('/')[1];
     } else if (hash === '' || hash === '#home') {
         page = 'home';
     } else if (hash === '#myplants') {
         page = 'myplants';
     } else if (hash === '#search') {
         page = 'search';
-    } else if (hash === '#account') {
-        page = 'account';
+    } else if (hash === '#pot') {
+        page = 'pot';
     } else {
         page = '404';
     }
 
-    // Clear content 
-    appContent.innerHTML = ''; 
+    // Cleanup RTDB listeners when leaving pot dashboard
+    cleanupPotDashboard();
+
+    // Clear content
+    appContent.innerHTML = '';
     let weatherData = null; 
 
     // Fetch Weather for Home
@@ -66,10 +69,10 @@ export async function navigate(userProfile, userAuth) {
             await renderPlantDetailPage(appContent, param, userProfile, userAuth); 
             break;
 
-        case 'account':
-            renderAccountPage(appContent, userProfile, userAuth);
+        case 'pot':
+            renderPotDashboard(appContent, userProfile);
             break;
-            
+
         default:
             appContent.innerHTML = '<h1>404 - Page Not Found</h1><p>The requested page could not be found.</p>';
     }

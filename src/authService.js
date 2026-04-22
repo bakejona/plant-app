@@ -5,13 +5,14 @@ import { auth } from './firebase';
 import { createOrUpdateUserProfile } from './userService'; 
 
 // Import the necessary Auth functions from the modular SDK
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signOut,
-  GoogleAuthProvider,     
+  GoogleAuthProvider,
+  OAuthProvider,
   signInWithPopup,
-  sendPasswordResetEmail, // ⬅️ NEW IMPORT
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 
 /**
@@ -101,6 +102,23 @@ export async function signInWithGoogle() {
     return result;
   } catch (error) {
     // ⬅️ UPDATED: Use helper function for user-friendly error
+    throw new Error(getErrorMessage(error.code));
+  }
+}
+
+/**
+ * Signs in with Apple via popup.
+ * Requires Apple Sign In configured in Firebase Console + Apple Developer account.
+ */
+export async function signInWithApple() {
+  try {
+    const provider = new OAuthProvider('apple.com');
+    provider.addScope('email');
+    provider.addScope('name');
+    const result = await signInWithPopup(auth, provider);
+    await createOrUpdateUserProfile(result.user);
+    return result;
+  } catch (error) {
     throw new Error(getErrorMessage(error.code));
   }
 }

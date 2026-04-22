@@ -1,54 +1,53 @@
 // src/plantDetailPage.js
 
-import { getPlantDetails } from './plantService.js';
-import { openAddPlantModal } from './addPlantModal.js'; 
+import { rtdb } from './firebase.js';
+import { ref, get } from 'firebase/database';
+import { openAddPlantModal } from './addPlantModal.js';
+import { logoSVG } from './logoSVG.js';
+import { PLANT_IMAGES } from './plantImages.js';
 
-/**
- * Renders the detailed view of a specific plant.
- * @param {HTMLElement} container - The main app container.
- * @param {string} plantId - The ID of the plant to fetch.
- * @param {object} userProfile - User profile data.
- * @param {object} authUser - Firebase Auth user object.
- */
 export async function renderPlantDetailPage(container, plantId, userProfile, authUser) {
     container.innerHTML = '<div class="loading-screen"><p class="loading-text">Loading Plant Details...</p></div>';
 
     try {
-        // 1. Fetch Data
-        const plant = await getPlantDetails(plantId);
-        
-        // 2. Render HTML
-        container.innerHTML = generateDetailHTML(plant);
-        
-        // 3. Attach Event Listeners
+        const snap = await get(ref(rtdb, '/plants/' + plantId));
+        if (!snap.exists()) throw new Error('Plant not found.');
 
-        // Top-Left Back Button (Circle)
+        const plant = { id: plantId, ...snap.val() };
+
+        // Fetch all plants for "Similar to" section
+        const allSnap = await get(ref(rtdb, '/plants'));
+        const similarPlants = allSnap.exists()
+            ? getSimilarPlants(plant, allSnap.val())
+            : [];
+
+        container.innerHTML = generateDetailHTML(plant, userProfile?.temperatureUnit || 'C', similarPlants);
+
         document.getElementById('back-btn')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.history.back(); // Preserves previous scroll/quiz state
-        });
-
-        // Bottom "Back to Results" Button
-        document.getElementById('bottom-back-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
             window.history.back();
         });
 
-        // "Add to My Plants" Button -> Opens Modal
         document.getElementById('detail-add-btn')?.addEventListener('click', () => {
             if (!authUser) {
-                alert("Please sign in to add plants to your collection.");
+                alert('Please sign in to add plants to your collection.');
                 return;
             }
-            // Trigger the modal logic
             openAddPlantModal(plant, authUser);
         });
 
+        // Similar plant navigation
+        container.querySelectorAll('[data-similar-id]').forEach(el => {
+            el.addEventListener('click', () => {
+                window.location.hash = `#plantdetail/${el.dataset.similarId}`;
+            });
+        });
+
     } catch (error) {
-        console.error("Detail Render Error:", error);
+        console.error('Detail Render Error:', error);
         container.innerHTML = `
             <div class="error-screen">
-                <i class="fa-solid fa-circle-exclamation" style="font-size: 3em; color: #f44336; margin-bottom: 20px;"></i>
+                <i class="fa-solid fa-circle-exclamation" style="font-size:3em;color:#f44336;margin-bottom:20px;"></i>
                 <h1>Could not load plant</h1>
                 <p class="error-text">${error.message}</p>
                 <button class="primary-button" onclick="window.history.back()">Go Back</button>
@@ -57,40 +56,91 @@ export async function renderPlantDetailPage(container, plantId, userProfile, aut
     }
 }
 
-/**
- * Generates the HTML structure for the plant detail page.
- */
-function generateDetailHTML(plant) {
-    // Fallbacks for missing data
-    const imageUrl = plant.default_image?.regular_url || plant.default_image?.thumbnail || 'https://via.placeholder.com/400/41b883/FFFFFF?text=No+Image';
-    const commonName = plant.common_name || 'Unknown Plant';
-    const scientificName = plant.scientific_name?.[0] || 'Unknown Species';
-    const description = plant.description || "No description available for this plant, but it is a great addition to your indoor garden.";
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-    // Logic for Tags
-    let tagsHTML = '';
-    if (plant.indoor) tagsHTML += '<span class="tag-chip"><i class="fa-solid fa-house"></i> Indoor</span>';
-    if (plant.poisonous_to_pets) {
-        tagsHTML += '<span class="tag-chip warning"><i class="fa-solid fa-skull-crossbones"></i> Toxic to Pets</span>';
-    } else {
-        tagsHTML += '<span class="tag-chip safe"><i class="fa-solid fa-paw"></i> Pet Safe</span>';
-    }
+function lightLabel(care) {
+    return care?.light?.type || 'Unknown';
+}
+
+function wateringLabel(care) {
+    const max = care?.moisture?.max;
+    if (!max) return 'Unknown';
+    if (max <= 25) return 'Every 3–6 weeks';
+    if (max <= 30) return 'Every 2–4 weeks';
+    if (max <= 50) return 'Every 1–2 weeks';
+    if (max <= 60) return 'Every 5–7 days';
+    return 'Every 2–4 days';
+}
+
+function humidityLabel(care) {
+    const ideal = care?.humidity?.ideal;
+    if (!ideal) return 'Unknown';
+    if (ideal >= 65) return 'High';
+    if (ideal >= 50) return 'Average';
+    return 'Low';
+}
+
+function getSimilarPlants(plant, allPlantsObj) {
+    const myLightType  = plant.care?.light?.type || '';
+    const myMoistMax   = plant.care?.moisture?.max ?? 50;
+
+    return Object.entries(allPlantsObj)
+        .filter(([id]) => id !== plant.id)
+        .filter(([, p]) => {
+            const sameLightType   = p.care?.light?.type === myLightType;
+            const similarMoisture = Math.abs((p.care?.moisture?.max ?? 50) - myMoistMax) <= 20;
+            return sameLightType || similarMoisture;
+        })
+        .slice(0, 3)
+        .map(([id, p]) => ({ id, ...p }));
+}
+
+// ── HTML generation ───────────────────────────────────────────────────────────
+
+function generateDetailHTML(plant, tempUnit, similarPlants) {
+    const name          = plant.name || 'Unknown Plant';
+    const scientific    = plant.scientific_name || '';
+    const description   = plant.description || 'No description available.';
+    const care          = plant.care || {};
+    const moistureNotes = care.moisture?.notes || '';
+    const humidNotes    = care.humidity?.notes || '';
+    const tempCare      = tempUnit === 'F' ? care.temperature_f : care.temperature_c;
+    const tempLabel     = tempCare ? `${tempCare.min}–${tempCare.max}°${tempUnit}` : '—';
+    const heroImg       = PLANT_IMAGES[plant.id] || '';
+
+    const similarHTML = similarPlants.length ? `
+        <section class="similar-plants-section">
+            <h3 class="similar-plants-title">Similar to</h3>
+            <div class="similar-plants-row">
+                ${similarPlants.map(p => {
+                    const simImg = PLANT_IMAGES[p.id] || '';
+                    return `
+                    <div class="similar-plant-card" data-similar-id="${p.id}">
+                        <div class="similar-plant-icon ${simImg ? 'similar-plant-icon--photo' : ''}" ${simImg ? `style="background-image:url('${simImg}');background-size:cover;background-position:center;"` : ''}>${simImg ? '' : logoSVG()}</div>
+                        <p class="similar-plant-name">${p.name || p.id}</p>
+                        <p class="similar-plant-sci">${p.scientific_name || ''}</p>
+                    </div>`;
+                }).join('')}
+            </div>
+        </section>
+    ` : '';
 
     return `
         <div class="plant-detail-wrapper">
-            <div class="detail-header-image" style="background-image: url('${imageUrl}')">
+            <div class="detail-header-image ${heroImg ? '' : 'detail-header-image--empty'}" ${heroImg ? `style="background-image:url('${heroImg}')"` : ''}>
                 <button id="back-btn" class="nav-back-btn">
                     <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                ${heroImg ? '' : `<div class="detail-header-icon">${logoSVG()}</div>`}
+                <button id="detail-add-btn" class="detail-add-fab">
+                    <i class="fa-solid fa-plus"></i>
                 </button>
             </div>
 
             <div class="detail-content">
                 <header class="detail-title-section">
-                    <h1>${commonName}</h1>
-                    <p class="scientific-name">${scientificName}</p>
-                    <div class="tags-row">
-                        ${tagsHTML}
-                    </div>
+                    <h1>${name}</h1>
+                    <p class="scientific-name">${scientific}</p>
                 </header>
 
                 <hr class="divider">
@@ -98,54 +148,52 @@ function generateDetailHTML(plant) {
                 <section class="stats-grid">
                     <div class="stat-item">
                         <i class="fa-solid fa-sun stat-icon"></i>
-                        <span class="stat-label">Sunlight</span>
-                        <span class="stat-value">${formatText(plant.sunlight)}</span>
+                        <span class="stat-label">Light</span>
+                        <span class="stat-value">${lightLabel(care)}</span>
                     </div>
                     <div class="stat-item">
                         <i class="fa-solid fa-droplet stat-icon"></i>
                         <span class="stat-label">Watering</span>
-                        <span class="stat-value">${formatText(plant.watering)}</span>
+                        <span class="stat-value">${wateringLabel(care)}</span>
                     </div>
                     <div class="stat-item">
-                        <i class="fa-solid fa-seedling stat-icon"></i>
-                        <span class="stat-label">Care Level</span>
-                        <span class="stat-value">${formatText(plant.maintenance || plant.care_level)}</span>
+                        <i class="fa-solid fa-wind stat-icon"></i>
+                        <span class="stat-label">Humidity</span>
+                        <span class="stat-value">${humidityLabel(care)}</span>
                     </div>
                     <div class="stat-item">
-                        <i class="fa-solid fa-ruler-vertical stat-icon"></i>
-                        <span class="stat-label">Growth</span>
-                        <span class="stat-value">${plant.growth_rate || 'Moderate'}</span>
+                        <i class="fa-solid fa-temperature-half stat-icon"></i>
+                        <span class="stat-label">Temperature</span>
+                        <span class="stat-value">${tempLabel}</span>
                     </div>
                 </section>
 
                 <hr class="divider">
-                
-                <section class="detail-description">
-                    <h3>About this Plant</h3>
-                    <p>${description}</p>
-                </section>
-                
-                <button id="detail-add-btn" class="primary-button" style="width: 100%; margin-top: 30px; display: flex; justify-content: center; gap: 10px; padding: 15px;">
-                    <i class="fa-solid fa-plus"></i> Add to My Plants
-                </button>
 
-                <button id="bottom-back-btn" class="secondary-text-btn">
+                <div class="pot-info-card detail-info-card">
+                    <h3 class="detail-info-heading">About this Plant</h3>
+                    <div class="care-note">
+                        <span class="care-note-icon"><i class="fa-solid fa-circle-info"></i></span>
+                        <span>${description}</span>
+                    </div>
+                    ${moistureNotes ? `
+                    <div class="care-note">
+                        <span class="care-note-icon"><i class="fa-solid fa-droplet"></i></span>
+                        <span>${moistureNotes}</span>
+                    </div>` : ''}
+                    ${humidNotes ? `
+                    <div class="care-note">
+                        <span class="care-note-icon"><i class="fa-solid fa-wind"></i></span>
+                        <span>${humidNotes}</span>
+                    </div>` : ''}
+                </div>
+
+                ${similarHTML}
+
+                <button id="bottom-back-btn" class="secondary-text-btn" onclick="window.history.back()">
                     <i class="fa-solid fa-arrow-left"></i> Back to Results
                 </button>
             </div>
         </div>
     `;
-}
-
-/**
- * Helper to format API text (arrays to string, remove underscores).
- */
-function formatText(val) {
-    if (Array.isArray(val)) {
-        return val.map(item => item.replace(/_/g, ' ')).join(', ');
-    }
-    if (!val) return 'Unknown';
-    // Capitalize first letter and replace underscores
-    const str = val.toString().replace(/_/g, ' ');
-    return str.charAt(0).toUpperCase() + str.slice(1);
 }

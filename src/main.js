@@ -17,6 +17,9 @@ import { fetchWeather, getCurrentBrowserLocation } from './weatherService.js';
 import { logoSVG } from './logoSVG.js';
 import './style.scss';
 
+// Set to true only at the moment of account creation — never on login
+let _pendingSetup = false;
+
 // ----------------------------------------------------
 // AUTHENTICATION UI & LOGIC
 // ----------------------------------------------------
@@ -360,6 +363,7 @@ function renderAuthForm(container) {
                 await setDoc(doc(db, 'users', cred.user.uid), {
                     email, joined: new Date().toISOString(), temperatureUnit: 'F',
                 });
+                _pendingSetup = true;
             }
         } catch (error) {
             const code = error.code || '';
@@ -377,7 +381,10 @@ function renderAuthForm(container) {
     // Google
     container.querySelector('#btn-google').addEventListener('click', async () => {
         clearError();
-        try { await signInWithGoogle(); }
+        try {
+            const isNewUser = await signInWithGoogle();
+            if (isNewUser) _pendingSetup = true;
+        }
         catch (err) { showError(err.message); shake(); }
     });
 }
@@ -568,14 +575,12 @@ onAuthStateChanged(auth, async (user) => {
 
         // Fetch User Profile
         let userProfile = {};
-        let isNewUser   = false;
         try {
             const docSnap = await getDoc(doc(db, 'users', user.uid));
             if (docSnap.exists()) {
                 userProfile = docSnap.data();
             } else {
-                // First-time Google sign-in — create initial doc
-                isNewUser = true;
+                // No doc yet (e.g. race condition) — create a minimal one
                 await setDoc(doc(db, 'users', user.uid), {
                     email: user.email,
                     joined: new Date().toISOString(),
@@ -586,12 +591,12 @@ onAuthStateChanged(auth, async (user) => {
             console.error("Error fetching profile", e);
         }
 
-        // New users or users who haven't completed setup → show setup form
-        if (isNewUser || !userProfile.setupComplete) {
+        // Only show setup when explicitly triggered at account-creation time
+        if (_pendingSetup) {
+            _pendingSetup = false;
             bottomNav.style.display = 'none';
             profileMenuRoot.style.display = 'none';
             renderProfileSetup(appContent, user, () => {
-                // After setup, reload so onAuthStateChanged re-fires with fresh profile
                 window.location.reload();
             });
             return;

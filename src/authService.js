@@ -12,6 +12,7 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   signInWithPopup,
+  getAdditionalUserInfo,
   sendPasswordResetEmail,
 } from 'firebase/auth';
 
@@ -98,10 +99,9 @@ export async function signInWithGoogle() {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
     await createOrUpdateUserProfile(result.user);
-    console.log('Google Sign In successful:', result.user);
-    return result;
+    const isNewUser = getAdditionalUserInfo(result)?.isNewUser ?? false;
+    return isNewUser;
   } catch (error) {
-    // ⬅️ UPDATED: Use helper function for user-friendly error
     throw new Error(getErrorMessage(error.code));
   }
 }

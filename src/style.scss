@@ -435,31 +435,53 @@ input[type="text"],
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     border-radius: 14px;
-    padding: clamp(7px, 2vw, 12px) clamp(9px, 2.5vw, 14px);
-    width: clamp(62px, 17vw, 90px);
+    padding: 16px 18px;
+    width: 150px;
     position: relative;
     display: flex;
     flex-direction: column;
+
+    // Tablet
+    @media (max-width: 768px) {
+        width: 110px;
+        padding: 12px 14px;
+    }
+
+    // Mobile
+    @media (max-width: 480px) {
+        width: clamp(62px, 17vw, 90px);
+        padding: clamp(7px, 2vw, 12px) clamp(9px, 2.5vw, 14px);
+        border-radius: 10px;
+    }
 }
 
 .ob-sc-icon {
     color: $color-green-accent;
-    font-size: clamp(0.65rem, 2vw, 0.85rem);
-    margin-bottom: 3px;
+    font-size: 1rem;
+    margin-bottom: 5px;
+
+    @media (max-width: 768px) { font-size: 0.85rem; }
+    @media (max-width: 480px) { font-size: clamp(0.65rem, 2vw, 0.8rem); margin-bottom: 3px; }
 }
 
 .ob-sc-val {
-    font-size: clamp(0.85rem, 3vw, 1.15rem);
+    font-size: 1.6rem;
     font-weight: 700;
     color: $color-text-light;
     line-height: 1;
-    small { font-size: 0.6em; color: rgba(255,255,255,0.5); margin-left: 1px; }
+    small { font-size: 0.55em; color: rgba(255,255,255,0.5); margin-left: 2px; }
+
+    @media (max-width: 768px) { font-size: 1.2rem; }
+    @media (max-width: 480px) { font-size: clamp(0.85rem, 3vw, 1.1rem); }
 }
 
 .ob-sc-lbl {
-    font-size: clamp(0.55rem, 1.5vw, 0.7rem);
+    font-size: 0.8rem;
     color: rgba(255,255,255,0.45);
-    margin: 2px 0 5px;
+    margin: 4px 0 8px;
+
+    @media (max-width: 768px) { font-size: 0.72rem; margin: 3px 0 6px; }
+    @media (max-width: 480px) { font-size: clamp(0.55rem, 1.5vw, 0.68rem); margin: 2px 0 5px; }
 }
 
 .ob-sc-bar {
@@ -618,7 +640,7 @@ input[type="text"],
         right: 40px;
     }
 
-    .ob-sensor-wrap    { padding: 40px 32px; }
+    .ob-sensor-wrap    { padding: 48px 48px; }
     .ob-mp-avatar      { width: 50px; height: 50px; }
     .ob-mt-task-circle { width: 28px; height: 28px; }
     .ob-mt-task-img    { width: 32px; height: 32px; }

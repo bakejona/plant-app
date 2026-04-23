@@ -3,18 +3,16 @@
 import sharp from 'sharp';
 import { readFileSync } from 'fs';
 
-const svg = readFileSync('./public/favicon.svg');
+const src = './public/icons/Plantpal-logo-color.png';
 
 const icons = [
-    { size: 192, name: 'icon-192.png' },
-    { size: 512, name: 'icon-512.png' },
-    { size: 180, name: 'icon-180.png' },  // apple-touch-icon
+    { size: 192,  dest: 'public/icons/icon-192.png' },
+    { size: 512,  dest: 'public/icons/icon-512.png' },
+    { size: 180,  dest: 'public/icons/icon-180.png' },  // apple-touch-icon
+    { size: 32,   dest: 'public/favicon-32.png' },
 ];
 
-for (const { size, name } of icons) {
-    await sharp(svg, { density: 300 })
-        .resize(size, size)
-        .png()
-        .toFile(`./public/icons/${name}`);
-    console.log(`✓ Generated public/icons/${name}`);
+for (const { size, dest } of icons) {
+    await sharp(src).resize(size, size).png().toFile(`./${dest}`);
+    console.log(`✓ Generated ${dest}`);
 }

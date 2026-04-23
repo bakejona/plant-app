@@ -79,6 +79,7 @@ export function openJournalModal(plant, authUser, { onSaved } = {}) {
     `;
 
     document.body.appendChild(overlay);
+    document.body.classList.add('modal-open');
 
     let newPhotoURL  = '';
     let selectedRating = 0;
@@ -147,7 +148,10 @@ export function openJournalModal(plant, authUser, { onSaved } = {}) {
     });
 
     // Close
-    const closeModal = () => overlay.remove();
+    const closeModal = () => {
+        overlay.remove();
+        document.body.classList.remove('modal-open');
+    };
     overlay.querySelector('.modal-close-btn').addEventListener('click', closeModal);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
 }

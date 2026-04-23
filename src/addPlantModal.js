@@ -74,6 +74,7 @@ export function openAddPlantModal(plant, authUser) {
     `;
 
     document.body.appendChild(modalOverlay);
+    document.body.classList.add('modal-open');
 
     // --- LOGIC ---
 
@@ -146,7 +147,10 @@ export function openAddPlantModal(plant, authUser) {
         }
     });
 
-    const closeModal = () => modalOverlay.remove();
+    const closeModal = () => {
+        modalOverlay.remove();
+        document.body.classList.remove('modal-open');
+    };
     closeBtn.addEventListener('click', closeModal);
     modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay) closeModal();

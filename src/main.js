@@ -14,6 +14,7 @@ import { mountProfileMenu } from './profileMenu.js';
 import { signInWithGoogle, signInWithApple, sendPasswordReset } from './authService.js';
 import { updateUserProfile } from './userService.js';
 import { fetchWeather, getCurrentBrowserLocation } from './weatherService.js';
+import { initNotifications } from './notificationService.js';
 import { logoSVG } from './logoSVG.js';
 import './style.scss';
 
@@ -605,6 +606,9 @@ onAuthStateChanged(auth, async (user) => {
 
         // Mount the persistent profile menu (inside bottom nav)
         mountProfileMenu(profileMenuRoot, userProfile, user);
+
+        // Request notification permission + register FCM (non-blocking)
+        initNotifications(user.uid);
 
         if (window.location.hash === '' || window.location.hash === '#') {
             window.location.hash = '#home';

@@ -12,6 +12,7 @@
   "devDependencies": {
     "firebase-tools": "^14.17.0",
     "sass": "^1.94.0",
+    "sharp": "^0.34.5",
     "vite": "^7.1.7"
   },
   "dependencies": {

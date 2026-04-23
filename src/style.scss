@@ -22,6 +22,8 @@ $color-error: #f44336;
 
 html {
     height: 100%;
+    // Prevent horizontal scroll on all screens
+    overflow-x: hidden;
 }
 
 body {
@@ -32,6 +34,24 @@ body {
     -webkit-font-smoothing: antialiased;
     height: 100%;
     overscroll-behavior: none;
+    overflow-x: hidden;
+
+    // iOS status bar safe area — extends background under the notch/Dynamic Island
+    padding-top: env(safe-area-inset-top);
+
+    // Prevent scroll when a modal is open
+    &.modal-open {
+        overflow: hidden;
+        // On iOS, height:100% alone won't lock scroll — position:fixed is required
+        position: fixed;
+        width: 100%;
+    }
+}
+
+// Native-app feel: suppress tap highlight and double-tap zoom
+* {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 h1, h2, h3 {

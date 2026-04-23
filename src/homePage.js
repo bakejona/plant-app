@@ -1,6 +1,7 @@
 // src/homePage.js
 
 import { getMyPlants, waterPlant, updatePlantDate, getGalleryPhotos } from './plantService.js';
+import { checkAndNotifyDuePlants } from './notificationService.js';
 import { openJournalModal } from './journalModal.js';
 import { logoSVG } from './logoSVG.js';
 import { PLANT_IMAGES } from './plantImages.js';
@@ -166,7 +167,11 @@ function taskSectionHTML(title, icon, cards) {
 export async function renderHomePage(container, profile, weatherData, authUser) {
     let plants = [];
     if (authUser) {
-        try { plants = await getMyPlants(authUser.uid); }
+        try {
+            plants = await getMyPlants(authUser.uid);
+            // Fire at most once per day — only care reminders, never pot alerts
+            checkAndNotifyDuePlants(plants);
+        }
         catch (e) { console.error(e); }
     }
 

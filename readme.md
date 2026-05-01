@@ -39,6 +39,30 @@ Log monthly progress updates with a photo, written notes, and a health rating (1
 ### Care Actions
 Water, fertilize, and journal directly from task cards on the home screen or from a plant's detail page — all synced to your Firebase account in real time.
 
+### Smart Plant Pot
+PlantPal integrates with a custom Arduino-based smart pot (Seeed XIAO ESP32-C3) that monitors your plant's environment in real time and syncs directly to Firebase.
+
+- **Live sensor dashboard** — dedicated pot tab shows moisture, temperature, humidity, and light level, each with animated gauges and status indicators (good / warn / bad)
+- **Moisture gauge** — water-fill circle with live percentage, smooth fill animation, and auto-detection of watering events
+- **Temperature gauge** — thermometer-style fill bar
+- **Humidity gauge** — circular arc ring
+- **Light gauge** — expanding fill circle; moon icon shown automatically during evening/night hours
+- **Plant-aware alerts** — each metric is compared against the selected plant's ideal care ranges; the dashboard shows the most critical issue with a dismissible alert banner
+- **Recently watered tracking** — automatically detected when moisture spikes by ≥20 points; suppresses false "dry soil" alerts for 14 days post-watering
+- **Moisture trend** — nudge shown when soil moisture has been steadily declining and is approaching the plant's minimum
+- **Connection status** — live/offline indicator; marks sensor offline if no data received for 2 minutes
+- **Pot avatar** — tap the pot circle to set a custom photo for your pot
+- **Plant selector** — assign any plant from your collection to the pot; care ranges update instantly
+- **5-second update interval** — Arduino pushes sensor readings to Firebase every 5 seconds for near-real-time monitoring
+
+**Hardware:**
+- Seeed XIAO ESP32-C3
+- AHT10 temperature & humidity sensor (I2C)
+- Capacitive soil moisture sensor (analog)
+- LDR 5528 light sensor (analog, voltage divider)
+
+**Arduino sketch:** `/SmartPlantPot/SmartPlantPot.ino` — dual WiFi with automatic hotspot fallback, calibrated moisture mapping, Firebase RTDB integration.
+
 ### Push Notifications
 - **On-app-open reminder** — checks for overdue watering and fertilizing tasks once per day and shows a local notification
 - **Background push** — Firebase Cloud Messaging delivers reminders even when the app is closed (requires notification permission)

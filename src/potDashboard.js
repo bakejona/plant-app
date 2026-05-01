@@ -260,8 +260,6 @@ function moistureCardHTML(moisture, care, recentlyWatered) {
     const pct        = moisture != null ? Math.min(100, Math.max(0, moisture)) : 50;
     const rangeText  = care ? `${care.min}–${care.max}%` : null;
     const display    = moisture != null ? `${moisture}%` : '—';
-    // center text within the filled portion, clamped so it never clips the edges
-    const textTop    = Math.min(82, Math.max(18, 100 - pct / 2)).toFixed(1);
 
     return `
         <div class="metric-card metric-card--moisture">
@@ -276,8 +274,8 @@ function moistureCardHTML(moisture, care, recentlyWatered) {
                 <div class="mc-outer-ring"></div>
                 <div class="mc-inner" style="--fill: ${pct}%">
                     <div class="mc-water"></div>
-                    <div class="mc-text-layer mc-text-layer--above"><span class="mc-pct" style="top:${textTop}%">${display}</span></div>
-                    <div class="mc-text-layer mc-text-layer--below" style="clip-path: inset(calc(100% - ${pct}%) 0 0 0)"><span class="mc-pct" style="top:${textTop}%">${display}</span></div>
+                    <div class="mc-text-layer mc-text-layer--above"><span class="mc-pct">${display}</span></div>
+                    <div class="mc-text-layer mc-text-layer--below" style="clip-path: inset(calc(100% - ${pct}%) 0 0 0)"><span class="mc-pct">${display}</span></div>
                 </div>
             </div>
             ${rangeText ? `<div class="metric-range" style="text-align:center;"><span class="metric-range-label">TARGET</span><span class="metric-range-values">${rangeText}</span></div>` : ''}
@@ -518,13 +516,12 @@ export function renderPotDashboard(container, profile) {
     function patchMoistureCard(moisture, care, recently) {
         const pct     = moisture != null ? Math.min(100, Math.max(0, moisture)) : 50;
         const display = moisture != null ? `${moisture}%` : '—';
-        const textTop = Math.min(82, Math.max(18, 100 - pct / 2)).toFixed(1);
         const { status } = getMetricStatus('moisture', moisture, care, recently);
 
         const inner = metricsEl.querySelector('.mc-inner');
         if (!inner) return;
         inner.style.setProperty('--fill', `${pct}%`);
-        inner.querySelectorAll('.mc-pct').forEach(s => { s.textContent = display; s.style.top = `${textTop}%`; });
+        inner.querySelectorAll('.mc-pct').forEach(s => { s.textContent = display; });
         const below = inner.querySelector('.mc-text-layer--below');
         if (below) below.style.clipPath = `inset(calc(100% - ${pct}%) 0 0 0)`;
         const icon = metricsEl.querySelector('.metric-card--moisture .metric-status-icon');
@@ -704,6 +701,7 @@ export function renderPotDashboard(container, profile) {
         resetStalenessTimer();
         renderSelector();
         renderMetrics();
+
     });
 }
 

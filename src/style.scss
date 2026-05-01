@@ -340,7 +340,8 @@ input[type="text"],
 
 // ── Slide 2: Task list card ────────────────────────────────────────────────────
 .ob-mockup--tasks {
-    top: 16px;
+    top: 50%;
+    transform: translateY(-50%);
     right: 12px;
     width: 172px;
     font-size: 0.68rem;
@@ -2117,6 +2118,7 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
 
 .mc-pct {
     position: absolute;
+    top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     font-family: $font-header;
@@ -2125,6 +2127,7 @@ $_scoop-size: $_scoop-btn + $_scoop-gap; // container side = 72px
     line-height: 1;
     white-space: nowrap;
 }
+
 
 .mc-header-right {
     display: flex;
